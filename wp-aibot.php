@@ -1,0 +1,37 @@
+<?php
+/**
+ * Plugin Name: WP AIBot
+ * Description: AI-powered chatbot plugin. Supports OpenAI-compatible APIs, knowledge base, lead capture, and multi-bot management.
+ * Version: 1.0.0
+ * Requires at least: 6.7
+ * Requires PHP: 8.0
+ * Plugin URI: https://github.com/pzjpzjpzj/wp-aibot
+ * Author: AzzDev
+ * Update URI: https://api.github.com/repos/pzjpzjpzj/wp-aibot
+ * Text Domain: wp-aibot
+ */
+
+defined('ABSPATH') || exit;
+
+define('AI_CHATBOT_VERSION', '1.0.0');
+define('AI_CHATBOT_FILE', __FILE__);
+define('AI_CHATBOT_PATH', plugin_dir_path(__FILE__));
+define('AI_CHATBOT_URL', plugin_dir_url(__FILE__));
+
+// Session secret — deferred to plugins_loaded so wp_salt() is guaranteed available
+add_action('plugins_loaded', function () {
+    if (!defined('AI_CHAT_SESSION_SECRET')) {
+        define('AI_CHAT_SESSION_SECRET', wp_salt('auth'));
+    }
+}, 1);
+
+// Autoload includes
+require_once AI_CHATBOT_PATH . 'includes/class-installer.php';
+require_once AI_CHATBOT_PATH . 'includes/class-plugin.php';
+
+// Activation / Deactivation
+register_activation_hook(__FILE__, [AI_Chatbot_Installer::class, 'activate']);
+register_deactivation_hook(__FILE__, [AI_Chatbot_Installer::class, 'deactivate']);
+
+// Bootstrap
+add_action('plugins_loaded', [AI_Chatbot_Plugin::class, 'init']);

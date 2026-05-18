@@ -1,0 +1,134 @@
+<?php
+defined('ABSPATH') || exit;
+
+class AI_Chatbot_AI_Client {
+
+    private array $config;
+
+    public function __construct(array $config) {
+        $this->config = $config;
+    }
+
+    /**
+     * Send a chat completion request to the configured platform.
+     */
+    public function chat(array $messages): ?array {
+        $platform = $this->config['chatbot_platform'] ?? 'openai';
+
+        if ($platform === 'anthropic') {
+            return $this->chat_anthropic($messages);
+        }
+
+        return $this->chat_openai($messages);
+    }
+
+    /**
+     * OpenAI-compatible API (OpenAI, OpenRouter, DeepSeek, Custom).
+     */
+    private function chat_openai(array $messages): ?array {
+        $body = [
+            'model'       => $this->config['chatbot_model'] ?? 'gpt-4o-mini',
+            'messages'    => $messages,
+            'temperature' => (float) ($this->config['chatbot_temperature'] ?? 0.2),
+            'max_tokens'  => (int) ($this->config['chatbot_max_tokens'] ?? 2000),
+        ];
+
+        $api_url = rtrim($this->config['chatbot_api_base_url'] ?? 'https://api.openai.com/v1', '/');
+        $api_key = $this->config['chatbot_api_key'] ?? '';
+
+        $response = wp_remote_post($api_url . '/chat/completions', [
+            'headers' => [
+                'Content-Type'  => 'application/json',
+                'Authorization' => 'Bearer ' . $api_key,
+            ],
+            'body'    => wp_json_encode($body),
+            'timeout' => 60,
+        ]);
+
+        if (is_wp_error($response)) {
+            return null;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($status !== 200 || !isset($data['choices'][0]['message']['content'])) {
+            return null;
+        }
+
+        return [
+            'content' => $data['choices'][0]['message']['content'],
+            'raw'     => $data,
+        ];
+    }
+
+    /**
+     * Anthropic API format.
+     */
+    private function chat_anthropic(array $messages): ?array {
+        $api_url = rtrim($this->config['chatbot_api_base_url'] ?? 'https://api.anthropic.com/v1', '/');
+        $api_key = $this->config['chatbot_api_key'] ?? '';
+
+        // Extract system message (Anthropic uses top-level "system" field)
+        $system = '';
+        $clean_messages = [];
+        foreach ($messages as $msg) {
+            if (($msg['role'] ?? '') === 'system') {
+                $system .= ($system ? "\n\n" : '') . ($msg['content'] ?? '');
+            } else {
+                $clean_messages[] = $msg;
+            }
+        }
+
+        $body = [
+            'model'       => $this->config['chatbot_model'] ?? 'claude-sonnet-4-20250514',
+            'messages'    => $clean_messages,
+            'max_tokens'  => (int) ($this->config['chatbot_max_tokens'] ?? 2000),
+            'temperature' => (float) ($this->config['chatbot_temperature'] ?? 0.2),
+        ];
+
+        if (!empty($system)) {
+            $body['system'] = $system;
+        }
+
+        $response = wp_remote_post($api_url . '/messages', [
+            'headers' => [
+                'Content-Type'      => 'application/json',
+                'x-api-key'         => $api_key,
+                'anthropic-version' => '2023-06-01',
+            ],
+            'body'    => wp_json_encode($body),
+            'timeout' => 60,
+        ]);
+
+        if (is_wp_error($response)) {
+            return null;
+        }
+
+        $status = wp_remote_retrieve_response_code($response);
+        $data = json_decode(wp_remote_retrieve_body($response), true);
+
+        if ($status !== 200 || !isset($data['content'][0]['text'])) {
+            return null;
+        }
+
+        return [
+            'content' => $data['content'][0]['text'],
+            'raw'     => $data,
+        ];
+    }
+
+    /**
+     * [Reserved] Embeddings API for future RAG support.
+     */
+    public function embed(string $text): array {
+        return [];
+    }
+
+    /**
+     * [Reserved] List available models.
+     */
+    public function list_models(): array {
+        return [];
+    }
+}
