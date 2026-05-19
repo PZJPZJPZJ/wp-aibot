@@ -44,21 +44,16 @@ class AI_Chatbot_Chat_API {
             return self::error('message_too_long', 'Message exceeds maximum length.', 400);
         }
 
-        // Visitor-based session (localStorage UUID) — no IP involved
-        if (!empty($visitor_id) && preg_match('/^[a-f0-9-]{36}$/i', $visitor_id)) {
-            $session_id = 'sess_' . md5($visitor_id . '_' . $chatbot_id);
-            $expected_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
-            if (empty($session_token)) {
-                // First request from this visitor — generate token
-                $session_token = $expected_token;
-            } elseif (!hash_equals($expected_token, $session_token)) {
-                return self::error('invalid_session', 'Invalid session token.', 403);
-            }
-        } else {
-            // Legacy IP-based session
-            if (!self::validate_session($session_id, $session_token)) {
-                return self::error('invalid_session', 'Invalid session token.', 403);
-            }
+        // Visitor-based session — single source of truth (localStorage UUID)
+        if (empty($visitor_id) || !preg_match('/^[a-f0-9-]{36}$/i', $visitor_id)) {
+            return self::error('invalid_session', 'Invalid visitor ID.', 403);
+        }
+        $session_id = 'sess_' . md5($visitor_id . '_' . $chatbot_id);
+        $expected_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
+        if (empty($session_token)) {
+            $session_token = $expected_token;
+        } elseif (!hash_equals($expected_token, $session_token)) {
+            $session_token = $expected_token;
         }
 
         // Rate limit
@@ -73,23 +68,19 @@ class AI_Chatbot_Chat_API {
         // Get or create conversation
         $conversation_id = self::get_conversation($session_id, $chatbot_id, $client_ip, $metadata);
 
-        // Session TTL check — if conversation has expired, start a new one
+        // Session TTL check — if conversation has expired, start a new one (same session_id)
         $session_ttl = (int) ($config['chatbot_session_ttl'] ?? 720);
         if ($conversation_id && $session_ttl > 0) {
             $started_at = get_post_meta($conversation_id, 'conversation_started_at', true);
             if (!empty($started_at)) {
                 $expiry = strtotime($started_at) + ($session_ttl * 60);
                 if (time() > $expiry) {
-                    // Generate a new session ID (append timestamp to force new conversation)
-                    $session_id = 'sess_' . md5(($visitor_id ?: $client_ip) . '_' . $chatbot_id . '_' . time());
+                    // New conversation with same session_id; get_conversation() returns latest by date DESC
                     $conversation_id = AI_Chatbot_CPT_Conversation::create($session_id, $chatbot_id, [
                         'ip'       => $client_ip,
                         'ua'       => $_SERVER['HTTP_USER_AGENT'] ?? '',
                         'page_url' => $metadata['page'] ?? '',
                     ]);
-                    // Regenerate session token for the new session
-                    $expected_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
-                    $session_token = $expected_token;
                 }
             }
         }
@@ -196,17 +187,6 @@ class AI_Chatbot_Chat_API {
         return $messages;
     }
 
-    private static function validate_session(string $session_id, string $token): bool {
-        if (empty($session_id) || empty($token)) {
-            return false;
-        }
-        if (!preg_match('/^[a-zA-Z0-9_-]+$/', $session_id)) {
-            return false;
-        }
-        $expected = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
-        return hash_equals($expected, $token);
-    }
-
     private static function get_conversation(string $session_id, int $chatbot_id, string $ip, array $metadata): int {
         $existing = get_posts([
             'post_type'      => 'ai_conversation',
@@ -214,6 +194,8 @@ class AI_Chatbot_Chat_API {
             'meta_value'     => $session_id,
             'posts_per_page' => 1,
             'fields'         => 'ids',
+            'orderby'        => 'date',
+            'order'          => 'DESC',
         ]);
 
         if (!empty($existing)) {
@@ -277,19 +259,16 @@ class AI_Chatbot_Chat_API {
             return self::error('invalid_chatbot', 'Chatbot not found.', 404);
         }
 
-        // Same visitor-based session logic as handle_chat()
-        if (!empty($visitor_id) && preg_match('/^[a-f0-9-]{36}$/i', $visitor_id)) {
-            $session_id = 'sess_' . md5($visitor_id . '_' . $chatbot_id);
-            $expected_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
-            if (empty($session_token)) {
-                $session_token = $expected_token;
-            } elseif (!hash_equals($expected_token, $session_token)) {
-                return self::error('invalid_session', 'Invalid session token.', 403);
-            }
-        } else {
-            if (!self::validate_session($session_id, $session_token)) {
-                return self::error('invalid_session', 'Invalid session token.', 403);
-            }
+        // Visitor-based session — single source of truth (localStorage UUID)
+        if (empty($visitor_id) || !preg_match('/^[a-f0-9-]{36}$/i', $visitor_id)) {
+            return self::error('invalid_session', 'Invalid visitor ID.', 403);
+        }
+        $session_id = 'sess_' . md5($visitor_id . '_' . $chatbot_id);
+        $expected_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
+        if (empty($session_token)) {
+            $session_token = $expected_token;
+        } elseif (!hash_equals($expected_token, $session_token)) {
+            $session_token = $expected_token;
         }
 
         // Look up existing conversation (never create)
@@ -328,6 +307,8 @@ class AI_Chatbot_Chat_API {
             'meta_value'     => $session_id,
             'posts_per_page' => 1,
             'fields'         => 'ids',
+            'orderby'        => 'date',
+            'order'          => 'DESC',
         ]);
 
         return !empty($existing) ? (int) $existing[0] : null;

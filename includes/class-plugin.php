@@ -81,22 +81,24 @@ class AI_Chatbot_Plugin {
         wp_enqueue_style('ai-chat-widget', AI_CHATBOT_URL . 'assets/css/chat-widget.css', [], AI_CHATBOT_VERSION);
         wp_enqueue_script('ai-chat-widget', AI_CHATBOT_URL . 'assets/js/chat-widget.js', [], AI_CHATBOT_VERSION, true);
 
+        // Always set global API config (safe to call multiple times — WordPress merges)
+        wp_localize_script('ai-chat-widget', 'AIChatBotGlobals', [
+            'rest_url'    => esc_url_raw(rest_url('ai-chat/v1/chat')),
+            'history_url' => esc_url_raw(rest_url('ai-chat/v1/history')),
+            'nonce'       => wp_create_nonce('wp_rest'),
+        ]);
+
         $config = AI_Chatbot_CPT_Chatbot::get_meta($chatbot_id);
         if (empty($widget_id)) {
             $widget_id = 'ai_' . $chatbot_id . '_' . uniqid();
         }
 
-        // Session
-        $client_ip = self::get_client_ip();
-        $session_id = 'sess_' . md5($client_ip . '_' . $chatbot_id);
-        $session_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
-
         // Pass config to JS
         $fab_icon = $config['chatbot_fab_icon'] ?: 'fa-comment';
         wp_localize_script('ai-chat-widget', 'AIChatConfig_' . $widget_id, [
             'chatbot_id'    => $chatbot_id,
-            'session_id'    => $session_id,
-            'session_token' => $session_token,
+            'session_id'    => '',
+            'session_token' => '', // Widget uses visitor-based session; server computes from UUID
             'layout_mode'   => $config['chatbot_layout_mode'] ?: 'inline',
             'greeting'      => $config['chatbot_greeting'] ?: 'Hello!',
             'avatar'        => $config['chatbot_avatar'] ? wp_get_attachment_url($config['chatbot_avatar']) : '',
@@ -300,11 +302,6 @@ class AI_Chatbot_Plugin {
             true
         );
 
-        wp_localize_script('ai-chat-widget', 'AIChatBotGlobals', [
-            'rest_url'    => esc_url_raw(rest_url('ai-chat/v1/chat')),
-            'history_url' => esc_url_raw(rest_url('ai-chat/v1/history')),
-            'nonce'       => wp_create_nonce('wp_rest'),
-        ]);
     }
 
     public function plugin_action_links(array $links): array {
