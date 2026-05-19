@@ -16,6 +16,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         <button type="button" class="ai-chatbot-tab-btn" data-tab="system"><?php esc_html_e('System Prompt', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="knowledge"><?php esc_html_e('Knowledge', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="memory"><?php esc_html_e('Memory', 'wp-aibot'); ?></button>
+        <button type="button" class="ai-chatbot-tab-btn" data-tab="capture"><?php esc_html_e('Lead Capture', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="notify"><?php esc_html_e('Notifications', 'wp-aibot'); ?></button>
     </nav>
 
@@ -500,6 +501,104 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         </div>
     </div>
 
+    <!-- Lead Capture -->
+    <div class="ai-chatbot-tab-panel" data-tab="capture">
+        <div class="ai-chatbot-field">
+            <label>
+                <input type="checkbox" name="chatbot_lead_capture_enabled" value="1" <?php checked($meta['chatbot_lead_capture_enabled'] ?? '1', '1'); ?> />
+                <?php esc_html_e('Enable Lead Capture Form', 'wp-aibot'); ?>
+            </label>
+            <div class="description" style="margin-top:4px;"><?php esc_html_e('When enabled, a contact form popup appears when all rules below are met. The visitor\'s submission is sent to the AI as a chat message.', 'wp-aibot'); ?></div>
+        </div>
+        <div class="ai-chatbot-field">
+            <label><?php esc_html_e('Trigger Rules (AND logic — all must match)', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define conditions that trigger the lead capture form. All rules must be satisfied for the form to appear.', 'wp-aibot'); ?></div>
+            <input type="hidden" name="chatbot_lead_capture_rules_sentinel" value="1" />
+            <div id="js-capture-rules-fields">
+                <?php
+                $capture_rules = $meta['chatbot_lead_capture_rules'] ?? [];
+                if (is_string($capture_rules)) {
+                    $capture_rules = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_capture_rules'];
+                }
+                if (empty($capture_rules)) {
+                    $capture_rules = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_capture_rules'];
+                }
+                $cidx = 0;
+                foreach ($capture_rules as $rule):
+                    $rule = (array) $rule;
+                ?>
+                <div class="js-capture-rule-row" data-index="<?php echo $cidx; ?>">
+                    <div class="js-notify-fields-row">
+                        <div class="js-notify-field-path">
+                            <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][field]" value="<?php echo esc_attr($rule['field'] ?? ''); ?>" placeholder="lead.lead_score" style="width:100%;" />
+                        </div>
+                        <div class="js-notify-field-operator">
+                            <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
+                            <select name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][operator]" style="width:100%;">
+                                <option value="eq" <?php selected($rule['operator'] ?? '', 'eq'); ?>><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
+                                <option value="neq" <?php selected($rule['operator'] ?? '', 'neq'); ?>><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
+                                <option value="in" <?php selected($rule['operator'] ?? '', 'in'); ?>><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
+                                <option value="contains" <?php selected($rule['operator'] ?? '', 'contains'); ?>><?php esc_html_e('contains', 'wp-aibot'); ?></option>
+                                <option value="gt" <?php selected($rule['operator'] ?? '', 'gt'); ?>><?php esc_html_e('greater than (>)', 'wp-aibot'); ?></option>
+                                <option value="lt" <?php selected($rule['operator'] ?? '', 'lt'); ?>><?php esc_html_e('less than (<)', 'wp-aibot'); ?></option>
+                                <option value="gte" <?php selected($rule['operator'] ?? '', 'gte'); ?>><?php esc_html_e('>=', 'wp-aibot'); ?></option>
+                                <option value="lte" <?php selected($rule['operator'] ?? '', 'lte'); ?>><?php esc_html_e('<=', 'wp-aibot'); ?></option>
+                                <option value="empty" <?php selected($rule['operator'] ?? '', 'empty'); ?>><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
+                                <option value="not_empty" <?php selected($rule['operator'] ?? '', 'not_empty'); ?>><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
+                            </select>
+                        </div>
+                        <div class="js-notify-field-value">
+                            <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][value]" value="<?php echo esc_attr($rule['value'] ?? ''); ?>" style="width:100%;" />
+                        </div>
+                        <div class="js-notify-field-actions">
+                            <label>&nbsp;</label>
+                            <button type="button" class="js-capture-remove-rule button button-small" title="<?php esc_attr_e('Remove rule', 'wp-aibot'); ?>">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <?php $cidx++; endforeach; ?>
+            </div>
+            <template id="js-capture-rule-tpl">
+                <div class="js-capture-rule-row" data-index="__CIDX__">
+                    <div class="js-notify-fields-row">
+                        <div class="js-notify-field-path">
+                            <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_capture_rules[__CIDX__][field]" value="" placeholder="lead.lead_score" style="width:100%;" />
+                        </div>
+                        <div class="js-notify-field-operator">
+                            <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
+                            <select name="chatbot_lead_capture_rules[__CIDX__][operator]" style="width:100%;">
+                                <option value="eq"><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
+                                <option value="neq"><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
+                                <option value="in"><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
+                                <option value="contains"><?php esc_html_e('contains', 'wp-aibot'); ?></option>
+                                <option value="gt"><?php esc_html_e('greater than (>)', 'wp-aibot'); ?></option>
+                                <option value="lt"><?php esc_html_e('less than (<)', 'wp-aibot'); ?></option>
+                                <option value="gte"><?php esc_html_e('>=', 'wp-aibot'); ?></option>
+                                <option value="lte"><?php esc_html_e('<=', 'wp-aibot'); ?></option>
+                                <option value="empty"><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
+                                <option value="not_empty"><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
+                            </select>
+                        </div>
+                        <div class="js-notify-field-value">
+                            <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_capture_rules[__CIDX__][value]" value="" style="width:100%;" />
+                        </div>
+                        <div class="js-notify-field-actions">
+                            <label>&nbsp;</label>
+                            <button type="button" class="js-capture-remove-rule button button-small" title="<?php esc_attr_e('Remove rule', 'wp-aibot'); ?>">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <div style="margin-top:8px;">
+                <button type="button" class="js-capture-add-rule button">+ <?php esc_html_e('Add Rule', 'wp-aibot'); ?></button>
+            </div>
+        </div>
+    </div>
+
     <!-- Notifications -->
     <div class="ai-chatbot-tab-panel" data-tab="notify">
         <div class="ai-chatbot-field">
@@ -511,6 +610,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         <div class="ai-chatbot-field">
             <label for="chatbot_notify_email"><?php esc_html_e('Notification Email', 'wp-aibot'); ?></label>
             <input type="email" id="chatbot_notify_email" name="chatbot_notify_email" value="<?php echo esc_attr($meta['chatbot_notify_email']); ?>" />
+            <div class="description"><?php esc_html_e('Email address that receives lead notifications. Supports any WordPress mailer (SMTP, FluentSMTP, etc.).', 'wp-aibot'); ?></div>
         </div>
         <div class="ai-chatbot-field">
             <label for="chatbot_notify_webhook"><?php esc_html_e('Wecom Webhook', 'wp-aibot'); ?></label>
@@ -618,6 +718,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
 window.aiChatbotAdmin = window.aiChatbotAdmin || {};
 window.aiChatbotAdmin.schemaIdx = <?php echo max($idx, 0); ?>;
 window.aiChatbotAdmin.notifyIdx = <?php echo max($ridx ?? 0, 0); ?>;
+window.aiChatbotAdmin.captureIdx = <?php echo max($cidx ?? 0, 0); ?>;
 document.getElementById('js-wecom-guide-toggle')?.addEventListener('click', function(e) {
     e.preventDefault();
     var guide = document.getElementById('js-wecom-guide');

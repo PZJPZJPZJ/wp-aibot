@@ -67,6 +67,7 @@
 
 .ai-chatbot-field textarea {
     min-height: 80px;
+    max-width: none;
 }
 
 .ai-chatbot-field .description {

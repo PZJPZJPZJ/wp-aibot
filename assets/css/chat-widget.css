@@ -1,12 +1,10 @@
 /* AI Chatbot Widget Styles */
 
-/* Reset Elementor global button interference */
-.ai-chatbot-fab,
-.ai-chatbot-send,
-.ai-chatbot-close,
-.ai-chat-contact-submit {
-    background: none;
-    color: inherit;
+/* Reset Elementor / WordPress global button interference */
+button.ai-chatbot-fab,
+button.ai-chatbot-send,
+button.ai-chatbot-close,
+button.ai-chat-contact-submit {
     border: none;
     padding: 0;
     font: inherit;
@@ -15,7 +13,6 @@
     text-transform: none;
     letter-spacing: normal;
     box-shadow: none;
-    border-radius: 0;
     text-decoration: none;
     transition: none;
     line-height: normal;
@@ -38,15 +35,15 @@
 }
 
 /* Floating / Popup Mode */
-.ai-chatbot-fab {
+div.ai-chatbot-container .ai-chatbot-fab {
     position: fixed;
     bottom: var(--fab-y, 24px);
     right: var(--fab-x, 24px);
     width: 56px;
     height: 56px;
     border-radius: 50%;
-    background: #4f46e5;
-    color: #fff;
+    background: var(--ai-chatbot-primary, #4f46e5);
+    color: var(--ai-chatbot-primary-text, #fff);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -79,7 +76,7 @@
     right: 0;
     bottom: 0;
     border-radius: 50%;
-    background: var(--ripple-color, #4f46e5);
+    background: var(--ripple-color, var(--ai-chatbot-primary, #4f46e5));
     pointer-events: none;
     animation: aiChatRipple var(--ripple-speed, 1.5s) ease-out infinite;
 }
@@ -201,7 +198,7 @@
 
 /* Header */
 .ai-chatbot-header {
-    background: #4f46e5;
+    background: var(--ai-chatbot-popup, #4f46e5);
     color: #fff;
     padding: 16px 20px;
     display: flex;
@@ -220,17 +217,21 @@
     opacity: 0.85;
 }
 
-.ai-chatbot-close {
+div.ai-chatbot-container .ai-chatbot-close {
     position: absolute;
     top: 12px;
     right: 16px;
     background: none;
     border: none;
     color: #fff;
-    font-size: 24px;
+    font-size: 18px;
     cursor: pointer;
     padding: 0;
     line-height: 1;
+}
+div.ai-chatbot-container .ai-chatbot-close:hover {
+    background: none !important;
+    color: #fff;
 }
 
 /* Messages Area */
@@ -269,7 +270,7 @@
 }
 
 .ai-chatbot-user .ai-chatbot-bubble {
-    background: #4f46e5;
+    background: var(--ai-chatbot-popup, #4f46e5);
     color: #fff;
     border-bottom-right-radius: 4px;
 }
@@ -338,12 +339,12 @@
     border-color: #ddd;
 }
 
-.ai-chatbot-send {
+div.ai-chatbot-container .ai-chatbot-send {
     width: 40px;
     height: 40px;
     border-radius: 50%;
     border: none;
-    background: #4f46e5;
+    background: var(--ai-chatbot-button, #4f46e5);
     color: #fff;
     font-size: 18px;
     cursor: pointer;
@@ -354,8 +355,8 @@
     transition: background 0.2s;
 }
 
-.ai-chatbot-send:hover {
-    background: #4338ca;
+div.ai-chatbot-container .ai-chatbot-send:hover {
+    background: var(--ai-chatbot-button-hover, #4338ca);
 }
 
 /* Error State */
@@ -380,9 +381,9 @@
     font-size: 14px;
 }
 
-.ai-chat-contact-submit {
+div.ai-chatbot-container .ai-chat-contact-submit {
     padding: 8px 16px;
-    background: #4f46e5;
+    background: var(--ai-chatbot-button, #4f46e5);
     color: #fff;
     border: none;
     border-radius: 8px;

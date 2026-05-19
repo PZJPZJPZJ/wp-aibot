@@ -143,7 +143,7 @@
                         <div class="ai-chatbot-header">
                             <span class="ai-chatbot-title">${i18n.title || 'AI Assistant'}</span>
                             <span class="ai-chatbot-subtitle">${i18n.subtitle || 'Ask me anything'}</span>
-                            <button class="ai-chatbot-close">&times;</button>
+                            <button class="ai-chatbot-close"><i class="fa fa-times"></i></button>
                         </div>
                         <div class="ai-chatbot-messages"></div>
                         <div class="ai-chatbot-input-area">
@@ -356,7 +356,6 @@
         }
 
         showContactForm() {
-            // Simple contact collection prompt
             const div = document.createElement('div');
             div.className = 'ai-chatbot-message ai-chatbot-bot';
             const bubble = document.createElement('div');
@@ -364,9 +363,22 @@
             bubble.innerHTML = '<p>Would you like to leave your contact information?</p>' +
                 '<input type="text" placeholder="Name" class="ai-chat-contact-input" />' +
                 '<input type="email" placeholder="Email" class="ai-chat-contact-input" />' +
+                '<input type="text" placeholder="WhatsApp" class="ai-chat-contact-input" />' +
                 '<button class="ai-chat-contact-submit">Submit</button>';
             div.appendChild(bubble);
             this.messagesEl.appendChild(div);
+
+            // Bind submit: send contact info as a chat message for the AI to process
+            var self = this;
+            var submitBtn = div.querySelector('.ai-chat-contact-submit');
+            submitBtn.addEventListener('click', function() {
+                var name = div.querySelector('input[placeholder="Name"]').value.trim();
+                var email = div.querySelector('input[placeholder="Email"]').value.trim();
+                var whatsapp = div.querySelector('input[placeholder="WhatsApp"]').value.trim();
+                var msg = 'My contact information: Name: ' + (name || 'not provided') + ', Email: ' + (email || 'not provided') + ', WhatsApp: ' + (whatsapp || 'not provided');
+                div.style.display = 'none';
+                self.sendMessage(msg);
+            });
         }
 
         renderFabIcon(icon) {

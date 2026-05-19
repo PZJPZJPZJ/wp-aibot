@@ -70,6 +70,8 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_layout_mode',
             'chatbot_lead_fields',
             'chatbot_lead_score_rules',
+            'chatbot_lead_capture_enabled',
+            'chatbot_lead_capture_rules',
             'chatbot_notify_enabled',
             'chatbot_notify_email',
             'chatbot_notify_webhook',
@@ -121,6 +123,16 @@ class AI_Chatbot_CPT_Chatbot {
                             $value[$i] = array_map('sanitize_text_field', $item);
                         }
                     }
+                } elseif ($field === 'chatbot_lead_capture_rules' && is_string($value)) {
+                    $decoded = json_decode($value, true);
+                    $value = is_array($decoded) ? $decoded : [];
+                } elseif ($field === 'chatbot_lead_capture_rules' && is_array($value)) {
+                    // Structured array from interactive UI — sanitize each field
+                    foreach ($value as $i => $item) {
+                        if (is_array($item)) {
+                            $value[$i] = array_map('sanitize_text_field', $item);
+                        }
+                    }
                 } elseif ($field === 'chatbot_json_schema' && is_array($value)) {
                     // Structured array from interactive UI — sanitize each field, strip auto-managed fields
                     $clean = [];
@@ -140,6 +152,8 @@ class AI_Chatbot_CPT_Chatbot {
                     $value = array_map('intval', $value);
                 } elseif (is_array($value)) {
                     $value = array_map('sanitize_text_field', $value);
+                } elseif (in_array($field, ['chatbot_system_prompt', 'chatbot_ai_rules'], true)) {
+                    $value = sanitize_textarea_field($value);
                 } else {
                     $value = sanitize_text_field($value);
                 }
@@ -147,7 +161,7 @@ class AI_Chatbot_CPT_Chatbot {
                 update_post_meta($post_id, $field, $value);
             } else {
                 // Handle empty/unchecked fields (checkboxes etc.)
-                $checkbox_fields = ['chatbot_notify_enabled', 'chatbot_fab_ripple_enabled', 'chatbot_fab_icon_shake', 'chatbot_fab_default_open'];
+                $checkbox_fields = ['chatbot_notify_enabled', 'chatbot_lead_capture_enabled', 'chatbot_fab_ripple_enabled', 'chatbot_fab_icon_shake', 'chatbot_fab_default_open'];
                 if ($field === 'chatbot_knowledge_ids') {
                     update_post_meta($post_id, $field, []);
                 } elseif (in_array($field, $checkbox_fields, true)) {
@@ -156,6 +170,9 @@ class AI_Chatbot_CPT_Chatbot {
                     // Schema section was rendered but all fields removed — save empty array
                     update_post_meta($post_id, $field, []);
                 } elseif ($field === 'chatbot_notify_rules' && isset($_POST['chatbot_notify_rules_sentinel'])) {
+                    // Rules section was rendered but all rules removed — save empty array
+                    update_post_meta($post_id, $field, []);
+                } elseif ($field === 'chatbot_lead_capture_rules' && isset($_POST['chatbot_lead_capture_rules_sentinel'])) {
                     // Rules section was rendered but all rules removed — save empty array
                     update_post_meta($post_id, $field, []);
                 }
@@ -183,6 +200,12 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_layout_mode'      => 'inline',
             'chatbot_lead_fields'      => [],
             'chatbot_lead_score_rules' => [],
+            'chatbot_lead_capture_enabled' => '1',
+            'chatbot_lead_capture_rules'   => [
+                ['field' => 'lead.lead_score', 'operator' => 'gte', 'value' => 'B'],
+                ['field' => 'lead.email',      'operator' => 'empty', 'value' => ''],
+                ['field' => 'lead.whatsapp',   'operator' => 'empty', 'value' => ''],
+            ],
             'chatbot_notify_enabled'   => '0',
             'chatbot_notify_email'     => '',
             'chatbot_notify_webhook'   => '',

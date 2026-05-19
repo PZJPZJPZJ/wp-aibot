@@ -79,6 +79,7 @@ class AI_Chatbot_Plugin {
     public static function render_chatbot_html(int $chatbot_id, string $widget_id = ''): string {
         // Ensure CSS and JS are always loaded, regardless of how the widget is rendered
         wp_enqueue_style('ai-chat-widget', AI_CHATBOT_URL . 'assets/css/chat-widget.css', [], AI_CHATBOT_VERSION);
+        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', [], '4.7.0');
         wp_enqueue_script('ai-chat-widget', AI_CHATBOT_URL . 'assets/js/chat-widget.js', [], AI_CHATBOT_VERSION, true);
 
         // Always set global API config (safe to call multiple times — WordPress merges)
@@ -139,7 +140,7 @@ class AI_Chatbot_Plugin {
         $has_style = false;
         $container_selector = '#' . $container_id;
         $style_output = '<style id="ai-chat-theme-' . esc_attr($widget_id) . '">' . "\n";
-        // Scope CSS variables to the container so both .ai-chatbot-fab and .ai-chatbot-popup can inherit
+        // Scope CSS variables to the container — colors use var() fallbacks in CSS
         $style_output .= $container_selector . ' {';
         $style_output .= ' --ripple-color: ' . esc_attr($ripple_color) . ';';
         $style_output .= ' --ripple-opacity: ' . esc_attr($ripple_opacity) . ';';
@@ -149,13 +150,14 @@ class AI_Chatbot_Plugin {
         $style_output .= ' --fab-y: ' . esc_attr($fab_dist_y) . 'px;';
         $style_output .= ' --hint-bg: ' . esc_attr($hint_bg) . ';';
         $style_output .= ' --hint-text: ' . esc_attr($hint_text) . ';';
+        $safe_popup = esc_attr($popup_color ?: '#4f46e5');
+        $safe_button = esc_attr($button_color ?: '#4f46e5');
+        $style_output .= ' --ai-chatbot-primary: ' . $safe_button . ';';
+        $style_output .= ' --ai-chatbot-popup: ' . $safe_popup . ';';
+        $style_output .= ' --ai-chatbot-button: ' . $safe_button . ';';
+        $style_output .= ' --ai-chatbot-button-hover: ' . $safe_button . ';';
         $style_output .= ' }' . "\n";
-        // Button background color
-        if (!empty($button_color) && $button_color !== '#4f46e5') {
-            $safe = esc_attr($button_color);
-            $style_output .= '.ai-chatbot-fab { background: ' . $safe . '; }' . "\n";
-            $has_style = true;
-        }
+        $has_style = true;
         // Position-specific rules
         $popup_gap = '66px';
         $fab_rules = [
@@ -174,23 +176,8 @@ class AI_Chatbot_Plugin {
             // Only output non-default position rules to avoid redundancy
             if ($fab_position !== 'bottom-right') {
                 $style_output .= '.ai-chatbot-fab { ' . $fab_rules[$fab_position] . ' }' . "\n";
-                $has_style = true;
             }
             $style_output .= '.ai-chatbot-popup { ' . $popup_rules[$fab_position] . ' }' . "\n";
-            $has_style = true;
-        }
-        if (!empty($popup_color) && $popup_color !== '#4f46e5') {
-            $safe = esc_attr($popup_color);
-            $style_output .= '.ai-chatbot-header { background: ' . $safe . '; }' . "\n";
-            $style_output .= '.ai-chatbot-user .ai-chatbot-bubble { background: ' . $safe . '; }' . "\n";
-            $has_style = true;
-        }
-        if (!empty($button_color) && $button_color !== '#4f46e5') {
-            $safe = esc_attr($button_color);
-            $style_output .= '.ai-chatbot-send { background: ' . $safe . '; }' . "\n";
-            $style_output .= '.ai-chatbot-send:hover { background: ' . $safe . '; }' . "\n";
-            $style_output .= '.ai-chat-contact-submit { background: ' . $safe . '; }' . "\n";
-            $has_style = true;
         }
         $style_output .= '</style>' . "\n";
         if ($has_style || $config['chatbot_fab_ripple_enabled'] === '1') {

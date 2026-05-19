@@ -85,6 +85,20 @@
             $(this).closest('.js-notify-rule-row').remove();
         });
 
+        // ===== Lead Capture Rules Builder =====
+        var $captureContainer = $('#js-capture-rules-fields');
+        var $captureTpl = $('#js-capture-rule-tpl');
+
+        $(document).on('click', '.js-capture-add-rule', function() {
+            var html = $captureTpl.html().replace(/__CIDX__/g, config.captureIdx);
+            $captureContainer.append(html);
+            config.captureIdx++;
+        });
+
+        $captureContainer.on('click', '.js-capture-remove-rule', function() {
+            $(this).closest('.js-capture-rule-row').remove();
+        });
+
         // ===== Font Awesome Icon Selector =====
         var $faInput = $('#chatbot_fab_icon');
         var $faPreview = $('#ai-chatbot-fa-preview');

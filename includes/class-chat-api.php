@@ -150,9 +150,112 @@ class AI_Chatbot_Chat_API {
                 'session_token'    => $session_token,
                 'conversation_id'  => $conversation_id,
                 'lead_score'       => $lead_data['lead_score'] ?? 'D',
-                'should_collect_contact' => in_array($lead_data['lead_score'] ?? 'D', ['A', 'B']),
+                'should_collect_contact' => self::evaluate_lead_capture($parsed, $config),
             ],
         ], 200);
+    }
+
+    /**
+     * Evaluate lead capture rules (AND logic — all must match).
+     */
+    private static function evaluate_lead_capture(array $parsed, array $config): bool {
+        if (empty($config['chatbot_lead_capture_enabled'])) {
+            return false;
+        }
+
+        $rules = $config['chatbot_lead_capture_rules'] ?? [];
+        if (empty($rules)) {
+            // Fallback: original behavior
+            $score = $parsed['lead']['lead_score'] ?? 'D';
+            return in_array($score, ['A', 'B'], true);
+        }
+
+        foreach ($rules as $rule) {
+            if (!self::evaluate_lead_rule($parsed, $rule)) {
+                return false; // AND logic — first fail breaks
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Evaluate a single lead capture rule.
+     */
+    private static function evaluate_lead_rule(array $data, array $rule): bool {
+        $field = $rule['field'] ?? '';
+        $operator = $rule['operator'] ?? 'eq';
+        $expected = $rule['value'] ?? null;
+
+        if (empty($field)) {
+            return false;
+        }
+
+        $actual = self::resolve_lead_field($data, $field);
+        if ($actual === null && $operator !== 'neq' && $operator !== 'empty') {
+            return false;
+        }
+
+        switch ($operator) {
+            case 'eq':
+            case '==':
+                return (string) $actual === (string) $expected;
+
+            case 'neq':
+            case '!=':
+                return (string) $actual !== (string) $expected;
+
+            case 'in':
+                $values = is_array($expected)
+                    ? $expected
+                    : array_map('trim', explode(',', (string) $expected));
+                return in_array((string) $actual, $values, true);
+
+            case 'contains':
+                return is_string($actual) && str_contains($actual, (string) $expected);
+
+            case 'gt':
+            case '>':
+                return is_numeric($actual) && is_numeric($expected) && (float) $actual > (float) $expected;
+
+            case 'gte':
+            case '>=':
+                return is_numeric($actual) && is_numeric($expected) && (float) $actual >= (float) $expected;
+
+            case 'lt':
+            case '<':
+                return is_numeric($actual) && is_numeric($expected) && (float) $actual < (float) $expected;
+
+            case 'lte':
+            case '<=':
+                return is_numeric($actual) && is_numeric($expected) && (float) $actual <= (float) $expected;
+
+            case 'empty':
+                return empty($actual) && $actual !== false && $actual !== 0;
+
+            case 'not_empty':
+                return !empty($actual) || $actual === false || $actual === 0;
+
+            default:
+                return false;
+        }
+    }
+
+    /**
+     * Resolve a dot-notation field path against an array.
+     */
+    private static function resolve_lead_field(array $data, string $path) {
+        $keys = explode('.', $path);
+        $current = $data;
+
+        foreach ($keys as $key) {
+            if (!is_array($current) || !array_key_exists($key, $current)) {
+                return null;
+            }
+            $current = $current[$key];
+        }
+
+        return $current;
     }
 
     private static function build_messages(array $config, string $knowledge_context, array $history, string $message): array {
