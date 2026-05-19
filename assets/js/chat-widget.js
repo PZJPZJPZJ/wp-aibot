@@ -91,7 +91,23 @@
             this.bindEvents();
 
             if (this.config.layout_mode !== 'inline') {
-                this.toggleChat(false);
+                // Default open with cache
+                if (this.config.fab_default_open === '1') {
+                    var cacheKey = 'ai_chat_open_' + this.config.chatbot_id;
+                    var cached = localStorage.getItem(cacheKey);
+                    var ttl = Number(this.config.open_cache_ttl || 1440) * 60 * 1000;
+                    if (cached === 'closed') {
+                        var cachedTime = localStorage.getItem(cacheKey + '_time');
+                        if (cachedTime && (Date.now() - Number(cachedTime)) > ttl) {
+                            localStorage.removeItem(cacheKey);
+                            localStorage.removeItem(cacheKey + '_time');
+                            cached = null;
+                        }
+                    }
+                    this.toggleChat(cached !== 'closed');
+                } else {
+                    this.toggleChat(false);
+                }
             }
 
             // Load past conversation history first, then show greeting if no history
@@ -107,9 +123,21 @@
 
             let html = '';
             if (isFloating) {
+                var shakeClass = this.config.icon_shake === '1' ? ' ai-chatbot-fab-icon-shake' : '';
+                var rippleDivs = '';
+                if (this.config.ripple_enabled === '1') {
+                    var speed = parseFloat(this.config.ripple_speed) || 1.5;
+                    for (var r = 0; r < 3; r++) {
+                        var delay = (speed / 4) * r;
+                        rippleDivs += '<div class="ai-chatbot-fab-ripple" style="animation-delay:' + delay.toFixed(2) + 's;"></div>';
+                    }
+                }
+                var hint = this.config.fab_hint ? '<div class="ai-chatbot-fab-hint ai-chatbot-fab-hint-' + (this.config.fab_hint_position || 'right') + '"><span>' + this.config.fab_hint + '</span></div>' : '';
                 html = `
                     <div class="ai-chatbot-fab" data-widget="${this.widgetId}">
-                        <span class="ai-chatbot-fab-icon">${this.config.fab_icon || '💬'}</span>
+                        ${hint}
+                        ${rippleDivs}
+                        <span class="ai-chatbot-fab-icon${shakeClass}">${this.renderFabIcon(this.config.fab_icon)}</span>
                     </div>
                     <div class="ai-chatbot-popup" style="display:none;">
                         <div class="ai-chatbot-header">
@@ -180,9 +208,39 @@
         toggleChat(forceState) {
             if (!this.popupEl) return;
             this.isOpen = forceState !== undefined ? forceState : !this.isOpen;
-            this.popupEl.style.display = this.isOpen ? 'flex' : 'none';
-            if (this.isOpen && this.inputEl) {
-                this.inputEl.focus();
+
+            if (this.isOpen) {
+                this.popupEl.style.display = 'flex';
+                // Ensure popup stays within viewport
+                requestAnimationFrame(function() {
+                    var rect = this.popupEl.getBoundingClientRect();
+                    if (rect.right > window.innerWidth) {
+                        this.popupEl.style.left = 'auto';
+                        this.popupEl.style.right = '16px';
+                    }
+                    if (rect.left < 0) {
+                        this.popupEl.style.right = 'auto';
+                        this.popupEl.style.left = '16px';
+                    }
+                }.bind(this));
+                if (this.inputEl) {
+                    this.inputEl.focus();
+                }
+            } else {
+                this.popupEl.style.display = 'none';
+                // Reset inline styles to let CSS variables take over
+                this.popupEl.style.right = '';
+                this.popupEl.style.left = '';
+                this.popupEl.style.bottom = '';
+                this.popupEl.style.top = '';
+                // Cache close state for default open
+                if (this.config.fab_default_open === '1') {
+                    var cacheKey = 'ai_chat_open_' + this.config.chatbot_id;
+                    try {
+                        localStorage.setItem(cacheKey, 'closed');
+                        localStorage.setItem(cacheKey + '_time', Date.now().toString());
+                    } catch(e) {}
+                }
             }
         }
 
@@ -311,6 +369,14 @@
             this.messagesEl.appendChild(div);
         }
 
+        renderFabIcon(icon) {
+            if (!icon) return '💬';
+            if (icon.indexOf('fa-') === 0) {
+                return '<i class="fa ' + icon + '"></i>';
+            }
+            return icon;
+        }
+
         renderMarkdown(text) {
             if (typeof text !== 'string') return '';
             try {
@@ -339,7 +405,7 @@
         autoResize() {
             if (this.inputEl) {
                 this.inputEl.style.height = 'auto';
-                this.inputEl.style.height = Math.min(this.inputEl.scrollHeight, 120) + 'px';
+                this.inputEl.style.height = this.inputEl.scrollHeight + 'px';
             }
         }
 

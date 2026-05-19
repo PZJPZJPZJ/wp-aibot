@@ -92,6 +92,7 @@ class AI_Chatbot_Plugin {
         $session_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
 
         // Pass config to JS
+        $fab_icon = $config['chatbot_fab_icon'] ?: 'fa-comment';
         wp_localize_script('ai-chat-widget', 'AIChatConfig_' . $widget_id, [
             'chatbot_id'    => $chatbot_id,
             'session_id'    => $session_id,
@@ -100,26 +101,98 @@ class AI_Chatbot_Plugin {
             'greeting'      => $config['chatbot_greeting'] ?: 'Hello!',
             'avatar'        => $config['chatbot_avatar'] ? wp_get_attachment_url($config['chatbot_avatar']) : '',
             'i18n'          => $config['chatbot_i18n'] ?: [],
-            'fab_icon'      => $config['chatbot_fab_icon'] ?: '💬',
+            'fab_icon'      => $fab_icon,
             'widget_id'     => $widget_id,
+            'ripple_enabled'   => $config['chatbot_fab_ripple_enabled'] ?? '0',
+            'ripple_color'     => $config['chatbot_fab_ripple_color'] ?: '',
+            'ripple_opacity'   => $config['chatbot_fab_ripple_opacity'] ?: '0.4',
+            'ripple_speed'     => $config['chatbot_fab_ripple_speed'] ?: '1.5',
+            'ripple_radius'    => $config['chatbot_fab_ripple_radius'] ?: '2.5',
+            'icon_shake'       => $config['chatbot_fab_icon_shake'] ?? '0',
+            'fab_hint'         => $config['chatbot_fab_hint'] ?: '',
+            'fab_hint_position' => $config['chatbot_fab_hint_position'] ?: 'right',
+            'fab_default_open'  => $config['chatbot_fab_default_open'] ?? '0',
+            'open_cache_ttl'    => $config['chatbot_open_cache_ttl'] ?: '1440',
+            'fab_position'      => $config['chatbot_fab_position'] ?: 'bottom-right',
+            'fab_distance_x'    => $config['chatbot_fab_distance_x'] ?: '24',
+            'fab_distance_y'    => $config['chatbot_fab_distance_y'] ?: '24',
         ]);
 
         $container_id = 'ai-chatbot-container-' . $widget_id;
         $layout = $config['chatbot_layout_mode'] ?? 'inline';
         ob_start();
 
-        // Inline theme styles for custom primary color
-        $primary = $config['chatbot_primary_color'] ?? '';
-        if (!empty($primary) && $primary !== '#4f46e5') {
-            $safe = esc_attr($primary);
-            echo '<style id="ai-chat-theme-' . esc_attr($widget_id) . '">
-.ai-chatbot-fab { background: ' . $safe . '; }
-.ai-chatbot-header { background: ' . $safe . '; }
-.ai-chatbot-send { background: ' . $safe . '; }
-.ai-chatbot-send:hover { background: ' . $safe . '; }
-.ai-chatbot-user .ai-chatbot-bubble { background: ' . $safe . '; }
-.ai-chatbot-input:focus { border-color: ' . $safe . '; }
-</style>';
+        // Inline theme styles for custom colors + ripple + position CSS variables
+        $popup_color = $config['chatbot_popup_color'] ?? $config['chatbot_primary_color'] ?? '';
+        $button_color = $config['chatbot_button_color'] ?? $config['chatbot_primary_color'] ?? '';
+        $ripple_color = $config['chatbot_fab_ripple_color'] ?: $button_color;
+        $ripple_opacity = $config['chatbot_fab_ripple_opacity'] ?: '0.4';
+        $ripple_speed = $config['chatbot_fab_ripple_speed'] ?: '1.5';
+        $ripple_radius = $config['chatbot_fab_ripple_radius'] ?: '2.5';
+        $fab_position = $config['chatbot_fab_position'] ?: 'bottom-right';
+        $fab_dist_x = $config['chatbot_fab_distance_x'] ?: '24';
+        $fab_dist_y = $config['chatbot_fab_distance_y'] ?: '24';
+        $hint_bg = $config['chatbot_fab_hint_bg'] ?: '#333333';
+        $hint_text = $config['chatbot_fab_hint_text'] ?: '#ffffff';
+        $has_style = false;
+        $container_selector = '#' . $container_id;
+        $style_output = '<style id="ai-chat-theme-' . esc_attr($widget_id) . '">' . "\n";
+        // Scope CSS variables to the container so both .ai-chatbot-fab and .ai-chatbot-popup can inherit
+        $style_output .= $container_selector . ' {';
+        $style_output .= ' --ripple-color: ' . esc_attr($ripple_color) . ';';
+        $style_output .= ' --ripple-opacity: ' . esc_attr($ripple_opacity) . ';';
+        $style_output .= ' --ripple-speed: ' . esc_attr($ripple_speed) . 's;';
+        $style_output .= ' --ripple-radius: ' . esc_attr($ripple_radius) . ';';
+        $style_output .= ' --fab-x: ' . esc_attr($fab_dist_x) . 'px;';
+        $style_output .= ' --fab-y: ' . esc_attr($fab_dist_y) . 'px;';
+        $style_output .= ' --hint-bg: ' . esc_attr($hint_bg) . ';';
+        $style_output .= ' --hint-text: ' . esc_attr($hint_text) . ';';
+        $style_output .= ' }' . "\n";
+        // Button background color
+        if (!empty($button_color) && $button_color !== '#4f46e5') {
+            $safe = esc_attr($button_color);
+            $style_output .= '.ai-chatbot-fab { background: ' . $safe . '; }' . "\n";
+            $has_style = true;
+        }
+        // Position-specific rules
+        $popup_gap = '66px';
+        $fab_rules = [
+            'bottom-right' => 'bottom:var(--fab-y);right:var(--fab-x);top:auto;left:auto;',
+            'bottom-left'  => 'bottom:var(--fab-y);left:var(--fab-x);top:auto;right:auto;',
+            'top-right'    => 'top:var(--fab-y);right:var(--fab-x);bottom:auto;left:auto;',
+            'top-left'     => 'top:var(--fab-y);left:var(--fab-x);bottom:auto;right:auto;',
+        ];
+        $popup_rules = [
+            'bottom-right' => 'bottom:calc(var(--fab-y) + ' . $popup_gap . ');right:var(--fab-x);top:auto;left:auto;',
+            'bottom-left'  => 'bottom:calc(var(--fab-y) + ' . $popup_gap . ');left:var(--fab-x);top:auto;right:auto;',
+            'top-right'    => 'top:calc(var(--fab-y) + ' . $popup_gap . ');right:var(--fab-x);bottom:auto;left:auto;',
+            'top-left'     => 'top:calc(var(--fab-y) + ' . $popup_gap . ');left:var(--fab-x);bottom:auto;right:auto;',
+        ];
+        if (isset($fab_rules[$fab_position])) {
+            // Only output non-default position rules to avoid redundancy
+            if ($fab_position !== 'bottom-right') {
+                $style_output .= '.ai-chatbot-fab { ' . $fab_rules[$fab_position] . ' }' . "\n";
+                $has_style = true;
+            }
+            $style_output .= '.ai-chatbot-popup { ' . $popup_rules[$fab_position] . ' }' . "\n";
+            $has_style = true;
+        }
+        if (!empty($popup_color) && $popup_color !== '#4f46e5') {
+            $safe = esc_attr($popup_color);
+            $style_output .= '.ai-chatbot-header { background: ' . $safe . '; }' . "\n";
+            $style_output .= '.ai-chatbot-user .ai-chatbot-bubble { background: ' . $safe . '; }' . "\n";
+            $has_style = true;
+        }
+        if (!empty($button_color) && $button_color !== '#4f46e5') {
+            $safe = esc_attr($button_color);
+            $style_output .= '.ai-chatbot-send { background: ' . $safe . '; }' . "\n";
+            $style_output .= '.ai-chatbot-send:hover { background: ' . $safe . '; }' . "\n";
+            $style_output .= '.ai-chat-contact-submit { background: ' . $safe . '; }' . "\n";
+            $has_style = true;
+        }
+        $style_output .= '</style>' . "\n";
+        if ($has_style || $config['chatbot_fab_ripple_enabled'] === '1') {
+            echo $style_output;
         }
 
         // Render container — custom HTML or default
@@ -209,6 +282,14 @@ class AI_Chatbot_Plugin {
             AI_CHATBOT_URL . 'assets/css/chat-widget.css',
             [],
             AI_CHATBOT_VERSION
+        );
+
+        // Font Awesome 4 for FAB icon
+        wp_enqueue_style(
+            'font-awesome',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css',
+            [],
+            '4.7.0'
         );
 
         wp_enqueue_script(

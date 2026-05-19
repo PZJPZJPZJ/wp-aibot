@@ -333,3 +333,24 @@
 .ai-conv-msg-table tr:last-child td {
     border-bottom: none;
 }
+
+/* Font Awesome Icon Selector Grid */
+.ai-chatbot-fa-option {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border: 2px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 18px;
+    color: #333;
+    background: #fff;
+    transition: all 0.15s ease;
+}
+
+.ai-chatbot-fa-option:hover {
+    border-color: #2271b1;
+    background: #f0f6fc;
+}

@@ -73,6 +73,27 @@ class AI_Chatbot_Chat_API {
         // Get or create conversation
         $conversation_id = self::get_conversation($session_id, $chatbot_id, $client_ip, $metadata);
 
+        // Session TTL check — if conversation has expired, start a new one
+        $session_ttl = (int) ($config['chatbot_session_ttl'] ?? 720);
+        if ($conversation_id && $session_ttl > 0) {
+            $started_at = get_post_meta($conversation_id, 'conversation_started_at', true);
+            if (!empty($started_at)) {
+                $expiry = strtotime($started_at) + ($session_ttl * 60);
+                if (time() > $expiry) {
+                    // Generate a new session ID (append timestamp to force new conversation)
+                    $session_id = 'sess_' . md5(($visitor_id ?: $client_ip) . '_' . $chatbot_id . '_' . time());
+                    $conversation_id = AI_Chatbot_CPT_Conversation::create($session_id, $chatbot_id, [
+                        'ip'       => $client_ip,
+                        'ua'       => $_SERVER['HTTP_USER_AGENT'] ?? '',
+                        'page_url' => $metadata['page'] ?? '',
+                    ]);
+                    // Regenerate session token for the new session
+                    $expected_token = hash_hmac('sha256', $session_id, AI_CHAT_SESSION_SECRET);
+                    $session_token = $expected_token;
+                }
+            }
+        }
+
         // Collect visitor data
         $visitor_data = self::collect_visitor_data($client_ip, $metadata);
 

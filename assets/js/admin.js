@@ -117,7 +117,14 @@
                 }
             });
 
-            var lines = ['Return ONLY valid JSON, no markdown, no code fences, in this exact shape:'];
+            var lines = ['Return ONLY valid JSON, no markdown, no code fences, in this exact shape.'];
+            lines.push('');
+            lines.push('Collect these fields from the conversation as you interact:');
+            $.each(fields, function(_, f) {
+                var desc = f.description || '(collect if mentioned)';
+                lines.push('  ' + f.path + ' — ' + desc);
+            });
+            lines.push('');
             lines.push('{');
             var body = [];
 
@@ -162,5 +169,33 @@
         $notifyContainer.on('click', '.js-notify-remove-rule', function() {
             $(this).closest('.js-notify-rule-row').remove();
         });
+
+        // ===== Font Awesome Icon Selector =====
+        var $faInput = $('#chatbot_fab_icon');
+        var $faPreview = $('#ai-chatbot-fa-preview');
+
+        // Update preview when user types
+        $faInput.on('input', function() {
+            updateFaPreview($(this).val());
+        });
+
+        // Click an icon in the grid
+        $(document).on('click', '.ai-chatbot-fa-option', function() {
+            var icon = $(this).data('icon');
+            $faInput.val(icon);
+            $('.ai-chatbot-fa-option').css({'border-color':'#ccc','background':'#fff'});
+            $(this).css({'border-color':'#2271b1','background':'#f0f6fc'});
+            updateFaPreview(icon);
+        });
+
+        function updateFaPreview(icon) {
+            if (icon && icon.indexOf('fa-') === 0) {
+                $faPreview.html('<i class="fa ' + icon + '"></i>');
+            } else if (icon) {
+                $faPreview.html('<span style="font-size:20px;">' + icon + '</span>');
+            } else {
+                $faPreview.html('<span style="font-size:20px;">💬</span>');
+            }
+        }
     });
 })(jQuery);

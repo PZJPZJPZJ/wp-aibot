@@ -75,17 +75,42 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_notify_rules',
             'chatbot_i18n',
             'chatbot_primary_color',
+            'chatbot_popup_color',
+            'chatbot_button_color',
             'chatbot_fab_icon',
+            'chatbot_fab_ripple_enabled',
+            'chatbot_fab_ripple_color',
+            'chatbot_fab_ripple_opacity',
+            'chatbot_fab_ripple_speed',
+            'chatbot_fab_ripple_radius',
+            'chatbot_fab_icon_shake',
+            'chatbot_fab_hint',
+            'chatbot_fab_hint_position',
+            'chatbot_fab_hint_bg',
+            'chatbot_fab_hint_text',
+            'chatbot_fab_default_open',
+            'chatbot_open_cache_ttl',
+            'chatbot_fab_position',
+            'chatbot_fab_distance_x',
+            'chatbot_fab_distance_y',
         ];
 
         foreach ($fields as $field) {
-            if (isset($_POST[$field]) && !self::is_placeholder_value($field, $_POST[$field])) {
+            if ($field === 'chatbot_api_key') {
+                // Empty = keep old value; non-empty = encrypt and save
+                if (!isset($_POST['chatbot_api_key']) || '' === $_POST['chatbot_api_key']) {
+                    continue;
+                }
+                $value = sanitize_text_field($_POST['chatbot_api_key']);
+                update_post_meta($post_id, $field, self::encrypt($value));
+                continue;
+            }
+
+            if (isset($_POST[$field])) {
                 $value = $_POST[$field];
 
                 // Special handling per field type
-                if ($field === 'chatbot_api_key' && !empty($value)) {
-                    $value = self::encrypt($value);
-                } elseif ($field === 'chatbot_notify_rules' && is_string($value)) {
+                if ($field === 'chatbot_notify_rules' && is_string($value)) {
                     $decoded = json_decode($value, true);
                     $value = is_array($decoded) ? $decoded : [];
                 } elseif ($field === 'chatbot_notify_rules' && is_array($value)) {
@@ -112,10 +137,11 @@ class AI_Chatbot_CPT_Chatbot {
 
                 update_post_meta($post_id, $field, $value);
             } else {
-                // Handle empty/unchecked fields
+                // Handle empty/unchecked fields (checkboxes etc.)
+                $checkbox_fields = ['chatbot_notify_enabled', 'chatbot_fab_ripple_enabled', 'chatbot_fab_icon_shake', 'chatbot_fab_default_open'];
                 if ($field === 'chatbot_knowledge_ids') {
                     update_post_meta($post_id, $field, []);
-                } elseif ($field === 'chatbot_notify_enabled') {
+                } elseif (in_array($field, $checkbox_fields, true)) {
                     update_post_meta($post_id, $field, '0');
                 } elseif ($field === 'chatbot_json_schema' && isset($_POST['chatbot_json_schema_sentinel'])) {
                     // Schema section was rendered but all fields removed — save empty array
@@ -128,13 +154,6 @@ class AI_Chatbot_CPT_Chatbot {
         }
     }
 
-    private static function is_placeholder_value(string $field, $value): bool {
-        if ($field === 'chatbot_api_key' && $value === '********') {
-            return true;
-        }
-        return false;
-    }
-
     public static function get_defaults(): array {
         return [
             'chatbot_platform'           => 'openai',
@@ -142,12 +161,12 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_api_key'          => '',
             'chatbot_model'            => 'gpt-4o-mini',
             'chatbot_temperature'      => '0.2',
-            'chatbot_max_tokens'       => '2000',
+            'chatbot_max_tokens'       => '4096',
             'chatbot_system_prompt'    => self::default_system_prompt(),
             'chatbot_json_schema'      => self::default_json_schema(),
             'chatbot_knowledge_ids'    => [],
             'chatbot_max_history'      => '10',
-            'chatbot_session_ttl'      => '60',
+            'chatbot_session_ttl'      => '720',
             'chatbot_greeting'         => 'Hello! How can I help you today?',
             'chatbot_offline_msg'      => 'We are currently offline. Please leave a message.',
             'chatbot_avatar'           => '',
@@ -168,7 +187,24 @@ class AI_Chatbot_CPT_Chatbot {
                 'thinking_text'     => 'Thinking...',
             ],
             'chatbot_primary_color'    => '#4f46e5',
-            'chatbot_fab_icon'         => '💬',
+            'chatbot_popup_color'      => '#4f46e5',
+            'chatbot_button_color'     => '#4f46e5',
+            'chatbot_fab_icon'         => 'fa-comment',
+            'chatbot_fab_ripple_enabled' => '0',
+            'chatbot_fab_ripple_color'   => '',
+            'chatbot_fab_ripple_opacity' => '0.4',
+            'chatbot_fab_ripple_speed'   => '1.5',
+            'chatbot_fab_ripple_radius'  => '2.5',
+            'chatbot_fab_icon_shake'     => '0',
+            'chatbot_fab_hint'           => '',
+            'chatbot_fab_hint_position'  => 'right',
+            'chatbot_fab_hint_bg'        => '#333333',
+            'chatbot_fab_hint_text'      => '#ffffff',
+            'chatbot_fab_default_open'   => '0',
+            'chatbot_open_cache_ttl'     => '1440',
+            'chatbot_fab_position'       => 'bottom-right',
+            'chatbot_fab_distance_x'     => '24',
+            'chatbot_fab_distance_y'     => '24',
         ];
     }
 
@@ -182,6 +218,16 @@ class AI_Chatbot_CPT_Chatbot {
         // Decrypt API key
         if (!empty($meta['chatbot_api_key'])) {
             $meta['chatbot_api_key'] = self::decrypt($meta['chatbot_api_key']);
+        }
+        // Backward compatibility: if old primary_color was customized but new color fields aren't saved
+        $saved_primary = get_post_meta($post_id, 'chatbot_primary_color', true);
+        if ($saved_primary !== '' && $saved_primary !== $defaults['chatbot_primary_color']) {
+            if (get_post_meta($post_id, 'chatbot_popup_color', true) === '') {
+                $meta['chatbot_popup_color'] = $saved_primary;
+            }
+            if (get_post_meta($post_id, 'chatbot_button_color', true) === '') {
+                $meta['chatbot_button_color'] = $saved_primary;
+            }
         }
         return $meta;
     }
@@ -214,10 +260,9 @@ class AI_Chatbot_CPT_Chatbot {
 Your goals:
 1. Answer questions about {company_name}\'s products and services.
 2. Guide users to clarify their project requirements.
-3. Collect lead information: name, email, whatsapp, country, city.
-4. Never invent prices, delivery dates, certifications, or legal commitments.
-5. Detect the user\'s language and answer in the same language.
-6. Keep answers concise and professional.';
+3. Never invent prices, delivery dates, certifications, or legal commitments.
+4. Detect the user\'s language and answer in the same language.
+5. Keep answers concise and professional.';
     }
 
     private static function default_json_schema(): array {
@@ -247,9 +292,23 @@ Your goals:
             return '';
         }
 
-        $lines = ["Return ONLY valid JSON, no markdown, no code fences, in this exact shape:"];
+        $lines = ["Return ONLY valid JSON, no markdown, no code fences, in this exact shape."];
+        $lines[] = '';
+        $lines[] = 'Collect these fields from the conversation as you interact:';
 
-        // Group by nesting prefix for cleaner output
+        // Build field descriptions section
+        $desc_lines = [];
+        foreach ($schema as $field) {
+            $path = $field['path'] ?? '';
+            $desc = $field['description'] ?? '';
+            if (!empty($path)) {
+                $desc_lines[] = '  ' . $path . ' — ' . (!empty($desc) ? $desc : '(collect if mentioned)');
+            }
+        }
+        $lines[] = implode("\n", $desc_lines);
+        $lines[] = '';
+
+        // Group by nesting prefix for cleaner JSON output
         $roots = [];
         $nested = [];
         foreach ($schema as $field) {
@@ -269,10 +328,8 @@ Your goals:
             $top[] = self::field_to_json_line($field);
         }
         foreach ($roots as $parent => $children) {
-            // Only output parent heading if it exists as a flat field, otherwise skip
             $child_lines = [];
             foreach ($children as $child) {
-                $child_parts = explode('.', $child['path'], 2);
                 $child_lines[] = self::field_to_json_line($child, '    ');
             }
             $top[] = '  "' . $parent . '": {';
@@ -289,7 +346,6 @@ Your goals:
     private static function field_to_json_line(array $field, string $indent = '  '): string {
         $path = $field['path'] ?? '';
         $type = $field['type'] ?? 'string';
-        $desc = $field['description'] ?? '';
         $enum = $field['enum_values'] ?? '';
 
         // Extract just the field name from dotted path
@@ -307,7 +363,6 @@ Your goals:
                 break;
         }
 
-        $comment = !empty($desc) ? ' // ' . $desc : '';
-        return $indent . '"' . $name . '": ' . $default . $comment;
+        return $indent . '"' . $name . '": ' . $default;
     }
 }

@@ -43,20 +43,190 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
 
         <div class="ai-chatbot-field-row">
             <div class="ai-chatbot-field">
-                <label for="chatbot_primary_color"><?php esc_html_e('Primary Color', 'wp-aibot'); ?></label>
-                <input type="color" id="chatbot_primary_color" name="chatbot_primary_color" value="<?php echo esc_attr($meta['chatbot_primary_color']); ?>" style="width:60px;height:36px;padding:2px;cursor:pointer;" />
-                <div class="description"><?php esc_html_e('Header, button, and accent color.', 'wp-aibot'); ?></div>
+                <label for="chatbot_fab_position"><?php esc_html_e('FAB Position', 'wp-aibot'); ?></label>
+                <select id="chatbot_fab_position" name="chatbot_fab_position">
+                    <option value="bottom-right" <?php selected($meta['chatbot_fab_position'], 'bottom-right'); ?>><?php esc_html_e('Bottom Right', 'wp-aibot'); ?></option>
+                    <option value="bottom-left" <?php selected($meta['chatbot_fab_position'], 'bottom-left'); ?>><?php esc_html_e('Bottom Left', 'wp-aibot'); ?></option>
+                    <option value="top-right" <?php selected($meta['chatbot_fab_position'], 'top-right'); ?>><?php esc_html_e('Top Right', 'wp-aibot'); ?></option>
+                    <option value="top-left" <?php selected($meta['chatbot_fab_position'], 'top-left'); ?>><?php esc_html_e('Top Left', 'wp-aibot'); ?></option>
+                </select>
             </div>
             <div class="ai-chatbot-field">
-                <label for="chatbot_fab_icon"><?php esc_html_e('FAB Icon', 'wp-aibot'); ?></label>
-                <input type="text" id="chatbot_fab_icon" name="chatbot_fab_icon" value="<?php echo esc_attr($meta['chatbot_fab_icon']); ?>" style="width:80px;font-size:18px;text-align:center;" />
-                <div class="description"><?php esc_html_e('Emoji or text for the floating button.', 'wp-aibot'); ?></div>
+                <label for="chatbot_fab_distance_x"><?php esc_html_e('Horiz. Distance (px)', 'wp-aibot'); ?></label>
+                <input type="number" id="chatbot_fab_distance_x" name="chatbot_fab_distance_x" value="<?php echo esc_attr($meta['chatbot_fab_distance_x']); ?>" min="0" max="200" style="max-width:100px;" />
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_distance_y"><?php esc_html_e('Vert. Distance (px)', 'wp-aibot'); ?></label>
+                <input type="number" id="chatbot_fab_distance_y" name="chatbot_fab_distance_y" value="<?php echo esc_attr($meta['chatbot_fab_distance_y']); ?>" min="0" max="200" style="max-width:100px;" />
             </div>
         </div>
 
-        <hr style="margin:20px 0;border:none;border-top:1px solid #ddd;">
+        <h4><?php esc_html_e('Color Settings', 'wp-aibot'); ?></h4>
+        <div class="ai-chatbot-field-row">
+            <div class="ai-chatbot-field">
+                <label for="chatbot_popup_color"><?php esc_html_e('Popup/Header Color', 'wp-aibot'); ?></label>
+                <input type="color" id="chatbot_popup_color" name="chatbot_popup_color" value="<?php echo esc_attr($meta['chatbot_popup_color'] ?? $meta['chatbot_primary_color']); ?>" style="width:60px;height:36px;padding:2px;cursor:pointer;" />
+                <div class="description"><?php esc_html_e('Header background and user message bubbles.', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_button_color"><?php esc_html_e('Button Color', 'wp-aibot'); ?></label>
+                <input type="color" id="chatbot_button_color" name="chatbot_button_color" value="<?php echo esc_attr($meta['chatbot_button_color'] ?? $meta['chatbot_primary_color']); ?>" style="width:60px;height:36px;padding:2px;cursor:pointer;" />
+                <div class="description"><?php esc_html_e('FAB, send button, and submit button.', 'wp-aibot'); ?></div>
+            </div>
+        </div>
 
-        <h4><?php esc_html_e('Text Localization', 'wp-aibot'); ?></h4>
+        <div class="ai-chatbot-field">
+            <label for="chatbot_fab_icon"><?php esc_html_e('FAB Icon (Font Awesome)', 'wp-aibot'); ?></label>
+            <div style="display:flex;align-items:center;gap:10px;">
+                <input type="text" id="chatbot_fab_icon" name="chatbot_fab_icon" value="<?php echo esc_attr($meta['chatbot_fab_icon']); ?>" style="width:180px;" placeholder="fa-comment" />
+                <span id="ai-chatbot-fa-preview" style="font-size:24px;width:32px;height:32px;text-align:center;display:flex;align-items:center;justify-content:center;">
+                    <?php if (strpos($meta['chatbot_fab_icon'], 'fa-') === 0): ?>
+                    <i class="fa <?php echo esc_attr($meta['chatbot_fab_icon']); ?>"></i>
+                    <?php else: ?>
+                    <span style="font-size:20px;"><?php echo esc_html($meta['chatbot_fab_icon'] ?: '💬'); ?></span>
+                    <?php endif; ?>
+                </span>
+            </div>
+            <div class="description" style="margin-top:6px;"><?php esc_html_e('Enter a Font Awesome 4 class name (e.g., fa-comment, fa-comments, fa-weixin). Emoji also supported.', 'wp-aibot'); ?></div>
+            <div class="ai-chatbot-fa-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-width:400px;">
+                <?php
+                $fa_icons = ['fa-comment', 'fa-comments', 'fa-commenting', 'fa-comment-o', 'fa-comments-o', 'fa-weixin', 'fa-send', 'fa-envelope', 'fa-phone', 'fa-question-circle', 'fa-smile-o', 'fa-bell', 'fa-globe', 'fa-cog'];
+                $current_icon = $meta['chatbot_fab_icon'];
+                foreach ($fa_icons as $fa):
+                    $active = ($fa === $current_icon) ? ' style="border-color:#2271b1;background:#f0f6fc;"' : '';
+                ?>
+                <span class="ai-chatbot-fa-option" data-icon="<?php echo esc_attr($fa); ?>"<?php echo $active; ?> title="<?php echo esc_attr($fa); ?>">
+                    <i class="fa <?php echo esc_attr($fa); ?>"></i>
+                </span>
+                <?php endforeach; ?>
+            </div>
+        </div>
+
+        <h4><?php esc_html_e('FAB Animation', 'wp-aibot'); ?></h4>
+        <div class="ai-chatbot-field">
+            <label>
+                <input type="checkbox" name="chatbot_fab_ripple_enabled" value="1" <?php checked($meta['chatbot_fab_ripple_enabled'], '1'); ?> />
+                <?php esc_html_e('Enable ripple animation', 'wp-aibot'); ?>
+            </label>
+            <div class="description" style="margin-top:2px;"><?php esc_html_e('Continuous expanding rings around the FAB button for attention effect.', 'wp-aibot'); ?></div>
+        </div>
+        <div class="ai-chatbot-field-row" id="ai-chatbot-ripple-settings">
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_ripple_color"><?php esc_html_e('Ripple Color', 'wp-aibot'); ?></label>
+                <input type="color" id="chatbot_fab_ripple_color" name="chatbot_fab_ripple_color" value="<?php echo esc_attr($meta['chatbot_fab_ripple_color']); ?>" style="width:60px;height:36px;padding:2px;cursor:pointer;" />
+                <div class="description"><?php esc_html_e('Leave empty to match button color.', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_ripple_opacity"><?php esc_html_e('Opacity', 'wp-aibot'); ?></label>
+                <input type="range" id="chatbot_fab_ripple_opacity" name="chatbot_fab_ripple_opacity" value="<?php echo esc_attr($meta['chatbot_fab_ripple_opacity']); ?>" min="0.1" max="1" step="0.1" style="width:120px;vertical-align:middle;" />
+                <span id="ai-chatbot-ripple-opacity-val" style="margin-left:6px;font-size:13px;"><?php echo esc_html($meta['chatbot_fab_ripple_opacity']); ?></span>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_ripple_speed"><?php esc_html_e('Speed (seconds)', 'wp-aibot'); ?></label>
+                <input type="range" id="chatbot_fab_ripple_speed" name="chatbot_fab_ripple_speed" value="<?php echo esc_attr($meta['chatbot_fab_ripple_speed']); ?>" min="0.5" max="3" step="0.1" style="width:120px;vertical-align:middle;" />
+                <span id="ai-chatbot-ripple-speed-val" style="margin-left:6px;font-size:13px;"><?php echo esc_html($meta['chatbot_fab_ripple_speed']); ?>s</span>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_ripple_radius"><?php esc_html_e('Radius', 'wp-aibot'); ?></label>
+                <input type="range" id="chatbot_fab_ripple_radius" name="chatbot_fab_ripple_radius" value="<?php echo esc_attr($meta['chatbot_fab_ripple_radius']); ?>" min="1.5" max="4" step="0.1" style="width:120px;vertical-align:middle;" />
+                <span id="ai-chatbot-ripple-radius-val" style="margin-left:6px;font-size:13px;"><?php echo esc_html($meta['chatbot_fab_ripple_radius']); ?>x</span>
+            </div>
+        </div>
+        <div class="ai-chatbot-field">
+            <label>
+                <input type="checkbox" name="chatbot_fab_icon_shake" value="1" <?php checked($meta['chatbot_fab_icon_shake'], '1'); ?> />
+                <?php esc_html_e('Icon shake', 'wp-aibot'); ?>
+            </label>
+            <div class="description" style="margin-top:2px;"><?php esc_html_e('Subtle up-and-down vibration of the FAB icon for extra urgency.', 'wp-aibot'); ?></div>
+        </div>
+
+        <hr style="margin:8px 0;border:none;border-top:1px solid #eee;">
+
+        <h4 style="margin-top:12px;"><?php esc_html_e('FAB Hint & Default Open', 'wp-aibot'); ?></h4>
+        <div class="ai-chatbot-field-row">
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_hint"><?php esc_html_e('Button hint text', 'wp-aibot'); ?></label>
+                <input type="text" id="chatbot_fab_hint" name="chatbot_fab_hint" value="<?php echo esc_attr($meta['chatbot_fab_hint']); ?>" placeholder="<?php esc_attr_e('Contact us', 'wp-aibot'); ?>" style="max-width:300px;" />
+                <div class="description"><?php esc_html_e('Tooltip text next to the FAB button. Leave empty for no hint.', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_hint_position"><?php esc_html_e('Hint position', 'wp-aibot'); ?></label>
+                <select id="chatbot_fab_hint_position" name="chatbot_fab_hint_position">
+                    <option value="right" <?php selected($meta['chatbot_fab_hint_position'], 'right'); ?>><?php esc_html_e('Right', 'wp-aibot'); ?></option>
+                    <option value="left" <?php selected($meta['chatbot_fab_hint_position'], 'left'); ?>><?php esc_html_e('Left', 'wp-aibot'); ?></option>
+                    <option value="top" <?php selected($meta['chatbot_fab_hint_position'], 'top'); ?>><?php esc_html_e('Top', 'wp-aibot'); ?></option>
+                    <option value="bottom" <?php selected($meta['chatbot_fab_hint_position'], 'bottom'); ?>><?php esc_html_e('Bottom', 'wp-aibot'); ?></option>
+                </select>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_hint_bg"><?php esc_html_e('Hint background', 'wp-aibot'); ?></label>
+                <input type="color" id="chatbot_fab_hint_bg" name="chatbot_fab_hint_bg" value="<?php echo esc_attr($meta['chatbot_fab_hint_bg']); ?>" style="width:60px;height:36px;padding:2px;cursor:pointer;" />
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_hint_text"><?php esc_html_e('Hint text color', 'wp-aibot'); ?></label>
+                <input type="color" id="chatbot_fab_hint_text" name="chatbot_fab_hint_text" value="<?php echo esc_attr($meta['chatbot_fab_hint_text']); ?>" style="width:60px;height:36px;padding:2px;cursor:pointer;" />
+            </div>
+        </div>
+        <div class="ai-chatbot-field-row">
+            <div class="ai-chatbot-field">
+                <label>
+                    <input type="checkbox" name="chatbot_fab_default_open" value="1" <?php checked($meta['chatbot_fab_default_open'], '1'); ?> />
+                    <?php esc_html_e('Open popup by default', 'wp-aibot'); ?>
+                </label>
+                <div class="description"><?php esc_html_e('Popup opens automatically after page load. Uses local cache to remember close state.', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field" id="ai-chatbot-cache-ttl-field">
+                <label for="chatbot_open_cache_ttl"><?php esc_html_e('Cache TTL (minutes)', 'wp-aibot'); ?></label>
+                <input type="number" id="chatbot_open_cache_ttl" name="chatbot_open_cache_ttl" value="<?php echo esc_attr($meta['chatbot_open_cache_ttl']); ?>" min="1" max="10080" style="max-width:100px;" />
+                <div class="description"><?php esc_html_e('How long to remember the closed state (1-10080 min, default 1440 = 24h).', 'wp-aibot'); ?></div>
+            </div>
+        </div>
+
+        <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var rippleToggle = document.querySelector('[name="chatbot_fab_ripple_enabled"]');
+            var rippleSettings = document.getElementById('ai-chatbot-ripple-settings');
+            function toggleRippleSettings() {
+                rippleSettings.style.display = rippleToggle && rippleToggle.checked ? 'flex' : 'none';
+            }
+            if (rippleToggle && rippleSettings) {
+                rippleToggle.addEventListener('change', toggleRippleSettings);
+                toggleRippleSettings();
+            }
+            var opacityRange = document.getElementById('chatbot_fab_ripple_opacity');
+            var opacityVal = document.getElementById('ai-chatbot-ripple-opacity-val');
+            if (opacityRange && opacityVal) {
+                opacityRange.addEventListener('input', function() { opacityVal.textContent = this.value; });
+            }
+            var speedRange = document.getElementById('chatbot_fab_ripple_speed');
+            var speedVal = document.getElementById('ai-chatbot-ripple-speed-val');
+            if (speedRange && speedVal) {
+                speedRange.addEventListener('input', function() { speedVal.textContent = this.value + 's'; });
+            }
+            var radiusRange = document.getElementById('chatbot_fab_ripple_radius');
+            var radiusVal = document.getElementById('ai-chatbot-ripple-radius-val');
+            if (radiusRange && radiusVal) {
+                radiusRange.addEventListener('input', function() { radiusVal.textContent = this.value + 'x'; });
+            }
+            var tempRange = document.getElementById('chatbot_temperature');
+            var tempVal = document.getElementById('ai-chatbot-temp-val');
+            if (tempRange && tempVal) {
+                tempRange.addEventListener('input', function() { tempVal.textContent = this.value; });
+            }
+            // Cache TTL toggle
+            var defaultOpenToggle = document.querySelector('[name="chatbot_fab_default_open"]');
+            var cacheTtlField = document.getElementById('ai-chatbot-cache-ttl-field');
+            function toggleCacheTtl() {
+                cacheTtlField.style.display = defaultOpenToggle && defaultOpenToggle.checked ? 'block' : 'none';
+            }
+            if (defaultOpenToggle && cacheTtlField) {
+                defaultOpenToggle.addEventListener('change', toggleCacheTtl);
+                toggleCacheTtl();
+            }
+        });
+        </script>
+
+        <hr style="margin:20px 0;border:none;border-top:1px solid #ddd;">
         <div class="ai-chatbot-field-row">
             <div class="ai-chatbot-field">
                 <label for="chatbot_i18n_title"><?php esc_html_e('Title', 'wp-aibot'); ?></label>
@@ -109,7 +279,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         </div>
         <div class="ai-chatbot-field">
             <label for="chatbot_api_key"><?php esc_html_e('API Key', 'wp-aibot'); ?></label>
-            <input type="text" id="chatbot_api_key" name="chatbot_api_key" value="<?php echo esc_attr($meta['chatbot_api_key'] ? '********' : ''); ?>" />
+            <input type="text" id="chatbot_api_key" name="chatbot_api_key" value="" placeholder="<?php esc_attr_e('Leave blank to keep current key', 'wp-aibot'); ?>" />
             <div class="description"><?php esc_html_e('Leave blank to keep current key. New value will be encrypted.', 'wp-aibot'); ?></div>
         </div>
         <div class="ai-chatbot-field-row">
@@ -118,12 +288,17 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 <input type="text" id="chatbot_model" name="chatbot_model" value="<?php echo esc_attr($meta['chatbot_model']); ?>" />
             </div>
             <div class="ai-chatbot-field">
-                <label for="chatbot_temperature"><?php esc_html_e('Temperature', 'wp-aibot'); ?></label>
-                <input type="number" id="chatbot_temperature" name="chatbot_temperature" value="<?php echo esc_attr($meta['chatbot_temperature']); ?>" step="0.1" min="0" max="2" />
-            </div>
-            <div class="ai-chatbot-field">
                 <label for="chatbot_max_tokens"><?php esc_html_e('Max Tokens', 'wp-aibot'); ?></label>
                 <input type="number" id="chatbot_max_tokens" name="chatbot_max_tokens" value="<?php echo esc_attr($meta['chatbot_max_tokens']); ?>" min="1" max="32000" />
+                <div class="description"><?php esc_html_e('Maximum response length. 1 token ≈ 0.75 words.', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_temperature"><?php esc_html_e('Temperature', 'wp-aibot'); ?></label>
+                <div style="display:flex;align-items:center;gap:8px;">
+                    <input type="range" id="chatbot_temperature" name="chatbot_temperature" value="<?php echo esc_attr($meta['chatbot_temperature']); ?>" step="0.1" min="0" max="2" style="width:140px;vertical-align:middle;" />
+                    <span id="ai-chatbot-temp-val" style="font-size:13px;min-width:24px;"><?php echo esc_html($meta['chatbot_temperature']); ?></span>
+                </div>
+                <div class="description"><?php esc_html_e('Randomness: 0 = deterministic, 2 = very random. Default 0.2.', 'wp-aibot'); ?></div>
             </div>
         </div>
         <div class="ai-chatbot-field">
@@ -273,11 +448,19 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             <div class="ai-chatbot-field">
                 <label for="chatbot_max_history"><?php esc_html_e('Max History Rounds', 'wp-aibot'); ?></label>
                 <input type="number" id="chatbot_max_history" name="chatbot_max_history" value="<?php echo esc_attr($meta['chatbot_max_history']); ?>" min="0" max="100" />
+                <div class="description"><?php esc_html_e('Number of past conversation rounds sent to AI as context (0 = no history).', 'wp-aibot'); ?></div>
             </div>
             <div class="ai-chatbot-field">
                 <label for="chatbot_session_ttl"><?php esc_html_e('Session TTL (minutes)', 'wp-aibot'); ?></label>
                 <input type="number" id="chatbot_session_ttl" name="chatbot_session_ttl" value="<?php echo esc_attr($meta['chatbot_session_ttl']); ?>" min="1" max="1440" />
+                <div class="description"><?php esc_html_e('Inactivity timeout. After this period a new conversation starts (old one kept as history).', 'wp-aibot'); ?></div>
             </div>
+        </div>
+        <div class="ai-chatbot-variables" style="margin-top:12px;">
+            <strong><?php esc_html_e('Session Info', 'wp-aibot'); ?></strong><br>
+            <?php esc_html_e('Each visitor gets a unique UUID stored in browser localStorage. Session ID format:', 'wp-aibot'); ?>
+            <code>sess_{md5(visitor_id + chatbot_id)}</code><br>
+            <?php esc_html_e('When a session expires, a new conversation is created automatically.', 'wp-aibot'); ?>
         </div>
     </div>
 
