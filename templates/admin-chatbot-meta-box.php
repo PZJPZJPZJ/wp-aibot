@@ -511,6 +511,63 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             <div class="description" style="margin-top:4px;"><?php esc_html_e('When enabled, a contact form popup appears when all rules below are met. The visitor\'s submission is sent to the AI as a chat message.', 'wp-aibot'); ?></div>
         </div>
         <div class="ai-chatbot-field">
+            <label><?php esc_html_e('Form Fields', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define the input fields shown in the contact form. The "name" value is used as the field key when sending to AI.', 'wp-aibot'); ?></div>
+            <input type="hidden" name="chatbot_lead_fields_sentinel" value="1" />
+            <div id="js-lead-fields">
+                <?php
+                $lead_fields = $meta['chatbot_lead_fields'] ?? [];
+                if (is_string($lead_fields)) {
+                    $lead_fields = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_fields'];
+                }
+                if (empty($lead_fields)) {
+                    $lead_fields = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_fields'];
+                }
+                $lidx = 0;
+                foreach ($lead_fields as $lf):
+                    $lf = (array) $lf;
+                ?>
+                <div class="js-lead-field-row" data-index="<?php echo $lidx; ?>">
+                    <div class="js-notify-fields-row">
+                        <div class="js-schema-field-path" style="flex:1;">
+                            <label><?php esc_html_e('Name', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_fields[<?php echo $lidx; ?>][name]" value="<?php echo esc_attr($lf['name'] ?? ''); ?>" placeholder="email" style="width:100%;" />
+                        </div>
+                        <div class="js-schema-field-desc" style="flex:1.5;">
+                            <label><?php esc_html_e('Placeholder', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_fields[<?php echo $lidx; ?>][placeholder]" value="<?php echo esc_attr($lf['placeholder'] ?? ''); ?>" placeholder="Email Address" style="width:100%;" />
+                        </div>
+                        <div class="js-notify-field-actions" style="flex:0 0 auto;">
+                            <label>&nbsp;</label>
+                            <button type="button" class="js-lead-field-remove button button-small" title="<?php esc_attr_e('Remove field', 'wp-aibot'); ?>">✕</button>
+                        </div>
+                    </div>
+                </div>
+                <?php $lidx++; endforeach; ?>
+            </div>
+            <template id="js-lead-field-tpl">
+                <div class="js-lead-field-row" data-index="__LIDX__">
+                    <div class="js-notify-fields-row">
+                        <div class="js-schema-field-path" style="flex:1;">
+                            <label><?php esc_html_e('Name', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_fields[__LIDX__][name]" value="" placeholder="email" style="width:100%;" />
+                        </div>
+                        <div class="js-schema-field-desc" style="flex:1.5;">
+                            <label><?php esc_html_e('Placeholder', 'wp-aibot'); ?></label>
+                            <input type="text" name="chatbot_lead_fields[__LIDX__][placeholder]" value="" placeholder="Email Address" style="width:100%;" />
+                        </div>
+                        <div class="js-notify-field-actions" style="flex:0 0 auto;">
+                            <label>&nbsp;</label>
+                            <button type="button" class="js-lead-field-remove button button-small" title="<?php esc_attr_e('Remove field', 'wp-aibot'); ?>">✕</button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <div style="margin-top:8px;">
+                <button type="button" class="js-lead-field-add button">+ <?php esc_html_e('Add Field', 'wp-aibot'); ?></button>
+            </div>
+        </div>
+        <div class="ai-chatbot-field">
             <label><?php esc_html_e('Trigger Rules (AND logic — all must match)', 'wp-aibot'); ?></label>
             <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define conditions that trigger the lead capture form. All rules must be satisfied for the form to appear.', 'wp-aibot'); ?></div>
             <input type="hidden" name="chatbot_lead_capture_rules_sentinel" value="1" />
@@ -719,6 +776,7 @@ window.aiChatbotAdmin = window.aiChatbotAdmin || {};
 window.aiChatbotAdmin.schemaIdx = <?php echo max($idx, 0); ?>;
 window.aiChatbotAdmin.notifyIdx = <?php echo max($ridx ?? 0, 0); ?>;
 window.aiChatbotAdmin.captureIdx = <?php echo max($cidx ?? 0, 0); ?>;
+window.aiChatbotAdmin.leadFieldsIdx = <?php echo max($lidx ?? 0, 0); ?>;
 document.getElementById('js-wecom-guide-toggle')?.addEventListener('click', function(e) {
     e.preventDefault();
     var guide = document.getElementById('js-wecom-guide');

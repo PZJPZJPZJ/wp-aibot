@@ -356,15 +356,24 @@
         }
 
         showContactForm() {
+            var fields = this.config.lead_fields || [
+                {name:'name', placeholder:'Name'},
+                {name:'email', placeholder:'Email'},
+                {name:'whatsapp', placeholder:'WhatsApp'}
+            ];
+            var html = '<p>Would you like to leave your contact information?</p>';
+            for (var i = 0; i < fields.length; i++) {
+                var f = fields[i];
+                var type = f.name && f.name.toLowerCase().indexOf('email') !== -1 ? 'email' : 'text';
+                html += '<input type="' + type + '" placeholder="' + (f.placeholder || f.name) + '" data-field="' + (f.name || '') + '" class="ai-chat-contact-input" />';
+            }
+            html += '<button class="ai-chat-contact-submit">Submit</button>';
+
             const div = document.createElement('div');
             div.className = 'ai-chatbot-message ai-chatbot-bot';
             const bubble = document.createElement('div');
             bubble.className = 'ai-chatbot-bubble ai-chatbot-contact-form';
-            bubble.innerHTML = '<p>Would you like to leave your contact information?</p>' +
-                '<input type="text" placeholder="Name" class="ai-chat-contact-input" />' +
-                '<input type="email" placeholder="Email" class="ai-chat-contact-input" />' +
-                '<input type="text" placeholder="WhatsApp" class="ai-chat-contact-input" />' +
-                '<button class="ai-chat-contact-submit">Submit</button>';
+            bubble.innerHTML = html;
             div.appendChild(bubble);
             this.messagesEl.appendChild(div);
 
@@ -372,10 +381,15 @@
             var self = this;
             var submitBtn = div.querySelector('.ai-chat-contact-submit');
             submitBtn.addEventListener('click', function() {
-                var name = div.querySelector('input[placeholder="Name"]').value.trim();
-                var email = div.querySelector('input[placeholder="Email"]').value.trim();
-                var whatsapp = div.querySelector('input[placeholder="WhatsApp"]').value.trim();
-                var msg = 'My contact information: Name: ' + (name || 'not provided') + ', Email: ' + (email || 'not provided') + ', WhatsApp: ' + (whatsapp || 'not provided');
+                var parts = [];
+                var inputs = div.querySelectorAll('.ai-chat-contact-input');
+                for (var j = 0; j < inputs.length; j++) {
+                    var inp = inputs[j];
+                    var label = inp.getAttribute('data-field') || inp.getAttribute('placeholder') || 'field_' + j;
+                    var val = inp.value.trim() || 'not provided';
+                    parts.push(label + ': ' + val);
+                }
+                var msg = 'My contact information: ' + parts.join(', ');
                 div.style.display = 'none';
                 self.sendMessage(msg);
             });

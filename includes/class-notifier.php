@@ -10,27 +10,51 @@ class AI_Chatbot_Notifier {
      * @param array $parsed  Full parsed JSON from AI (includes 'answer', 'lead')
      * @param array $visitor_data
      * @param array $config
+     * @param int   $conversation_id  Save notification status to this conversation.
      */
-    public function notify(array $parsed, array $visitor_data, array $config): void {
+    public function notify(array $parsed, array $visitor_data, array $config, int $conversation_id = 0): void {
         if (empty($config['chatbot_notify_enabled'])) {
+            $this->save_status($conversation_id, 'disabled');
             return;
         }
 
         if (!$this->should_notify($parsed, $config)) {
+            $this->save_status($conversation_id, 'none');
             return;
         }
 
         $lead_data = $parsed['lead'] ?? [];
         $payload = array_merge($lead_data, ['visitor' => $visitor_data]);
 
+        $has_webhook = !empty($config['chatbot_notify_webhook']);
+        $has_email   = !empty($config['chatbot_notify_email']);
+
+        $webhook_ok = true;
+        $email_ok   = true;
+
         // Webhook (企业微信)
-        if (!empty($config['chatbot_notify_webhook'])) {
-            $this->send_webhook($config['chatbot_notify_webhook'], $payload);
+        if ($has_webhook) {
+            $webhook_ok = $this->send_webhook($config['chatbot_notify_webhook'], $payload);
         }
 
         // Email
-        if (!empty($config['chatbot_notify_email'])) {
-            $this->send_email($config['chatbot_notify_email'], $payload);
+        if ($has_email) {
+            $email_ok = $this->send_email($config['chatbot_notify_email'], $payload);
+        }
+
+        // Determine overall status
+        if ($has_webhook && $has_email) {
+            $this->save_status($conversation_id, $webhook_ok && $email_ok ? 'sent' : 'failed');
+        } elseif ($has_webhook) {
+            $this->save_status($conversation_id, $webhook_ok ? 'sent' : 'failed');
+        } else {
+            $this->save_status($conversation_id, $email_ok ? 'sent' : 'failed');
+        }
+    }
+
+    private function save_status(int $conversation_id, string $status): void {
+        if ($conversation_id > 0) {
+            update_post_meta($conversation_id, 'conversation_notification_status', $status);
         }
     }
 
@@ -133,21 +157,27 @@ class AI_Chatbot_Notifier {
         return $current;
     }
 
-    private function send_webhook(string $url, array $payload): void {
+    private function send_webhook(string $url, array $payload): bool {
         $markdown = $this->format_wecom_markdown($payload);
 
-        wp_remote_post($url, [
+        $response = wp_remote_post($url, [
             'headers'  => ['Content-Type' => 'application/json'],
             'body'     => wp_json_encode([
                 'msgtype'    => 'markdown_v2',
                 'markdown_v2' => ['content' => $markdown],
             ]),
             'timeout'  => 15,
-            'blocking' => false,
+            'blocking' => true,
         ]);
+
+        if (is_wp_error($response)) {
+            return false;
+        }
+        $code = wp_remote_retrieve_response_code($response);
+        return $code >= 200 && $code < 300;
     }
 
-    private function send_email(string $to, array $payload): void {
+    private function send_email(string $to, array $payload): bool {
         $subject = sprintf(
             '[AI Chatbot] New Lead - Score %s',
             $payload['lead_score'] ?? 'N/A'
@@ -162,7 +192,7 @@ class AI_Chatbot_Notifier {
             }
         }
 
-        wp_mail($to, $subject, $body);
+        return wp_mail($to, $subject, $body);
     }
 
     private function format_wecom_markdown(array $data): string {

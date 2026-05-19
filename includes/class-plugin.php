@@ -112,6 +112,7 @@ class AI_Chatbot_Plugin {
             'ripple_speed'     => $config['chatbot_fab_ripple_speed'] ?: '1.5',
             'ripple_radius'    => $config['chatbot_fab_ripple_radius'] ?: '2.5',
             'icon_shake'       => $config['chatbot_fab_icon_shake'] ?? '0',
+            'lead_fields'      => is_array($config['chatbot_lead_fields'] ?? null) ? $config['chatbot_lead_fields'] : [],
             'fab_hint'         => $config['chatbot_fab_hint'] ?: '',
             'fab_hint_position' => $config['chatbot_fab_hint_position'] ?: 'right',
             'fab_default_open'  => $config['chatbot_fab_default_open'] ?? '0',

@@ -140,7 +140,7 @@ class AI_Chatbot_Chat_API {
 
         // Trigger notification if rules match (pass full parsed data for rule evaluation)
         $notifier = new AI_Chatbot_Notifier();
-        $notifier->notify($parsed, $visitor_data, $config);
+        $notifier->notify($parsed, $visitor_data, $config, $conversation_id);
 
         return new WP_REST_Response([
             'ok'   => true,

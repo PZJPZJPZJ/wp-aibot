@@ -36,10 +36,11 @@ class AI_Chatbot_Admin_Columns {
     }
 
     public function conversation_columns(array $columns): array {
-        $columns['chatbot']    = __('Chatbot', 'wp-aibot');
-        $columns['lead_score'] = __('Lead Score', 'wp-aibot');
-        $columns['messages']   = __('Messages', 'wp-aibot');
-        $columns['started']    = __('Started', 'wp-aibot');
+        $columns['chatbot']      = __('Chatbot', 'wp-aibot');
+        $columns['lead_score']   = __('Lead Score', 'wp-aibot');
+        $columns['notification'] = __('Notification', 'wp-aibot');
+        $columns['messages']     = __('Messages', 'wp-aibot');
+        $columns['started']      = __('Started', 'wp-aibot');
         return $columns;
     }
 
@@ -53,6 +54,16 @@ class AI_Chatbot_Admin_Columns {
             case 'lead_score':
                 $lead = get_post_meta($post_id, 'conversation_lead_data', true);
                 echo $lead ? esc_html($lead['lead_score'] ?? '—') : '—';
+                break;
+            case 'notification':
+                $status = get_post_meta($post_id, 'conversation_notification_status', true);
+                $labels = [
+                    'sent'     => '<span style="color:#46b450;">✓ ' . esc_html__('Sent', 'wp-aibot') . '</span>',
+                    'failed'   => '<span style="color:#dc3232;">✗ ' . esc_html__('Failed', 'wp-aibot') . '</span>',
+                    'none'     => '<span style="color:#888;">— ' . esc_html__('No match', 'wp-aibot') . '</span>',
+                    'disabled' => '<span style="color:#bbb;">— ' . esc_html__('Disabled', 'wp-aibot') . '</span>',
+                ];
+                echo isset($labels[$status]) ? $labels[$status] : '<span style="color:#ccc;">—</span>';
                 break;
             case 'messages':
                 echo (int) get_post_meta($post_id, 'conversation_message_count', true);

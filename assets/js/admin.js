@@ -126,5 +126,19 @@
                 $faPreview.html('<span style="font-size:20px;">💬</span>');
             }
         }
+
+        // ===== Lead Capture Form Fields Builder =====
+        var $leadFieldsContainer = $('#js-lead-fields');
+        var $leadFieldsTpl = $('#js-lead-field-tpl');
+
+        $(document).on('click', '.js-lead-field-add', function() {
+            var html = $leadFieldsTpl.html().replace(/__LIDX__/g, config.leadFieldsIdx);
+            $leadFieldsContainer.append(html);
+            config.leadFieldsIdx++;
+        });
+
+        $leadFieldsContainer.on('click', '.js-lead-field-remove', function() {
+            $(this).closest('.js-lead-field-row').remove();
+        });
     });
 })(jQuery);

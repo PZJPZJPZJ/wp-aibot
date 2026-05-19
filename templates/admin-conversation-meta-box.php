@@ -26,6 +26,18 @@ defined('ABSPATH') || exit;
             <tr><th><?php esc_html_e('Session ID', 'wp-aibot'); ?></th><td><code><?php echo esc_html($session_id); ?></code></td></tr>
             <tr><th><?php esc_html_e('Messages', 'wp-aibot'); ?></th><td><?php echo $msg_count; ?></td></tr>
             <tr><th><?php esc_html_e('Started', 'wp-aibot'); ?></th><td><?php echo esc_html($started_at); ?></td></tr>
+            <?php
+            $notify_status = get_post_meta($post->ID, 'conversation_notification_status', true);
+            if (!empty($notify_status)):
+                $labels = [
+                    'sent'     => '<span style="color:#46b450;">✓ ' . __('Sent', 'wp-aibot') . '</span>',
+                    'failed'   => '<span style="color:#dc3232;">✗ ' . __('Failed', 'wp-aibot') . '</span>',
+                    'none'     => '<span style="color:#888;">— ' . __('No match', 'wp-aibot') . '</span>',
+                    'disabled' => '<span style="color:#bbb;">— ' . __('Disabled', 'wp-aibot') . '</span>',
+                ];
+                echo '<tr><th>' . __('Notification', 'wp-aibot') . '</th><td>' . (isset($labels[$notify_status]) ? $labels[$notify_status] : esc_html($notify_status)) . '</td></tr>';
+            endif;
+            ?>
         </table>
     </div>
 

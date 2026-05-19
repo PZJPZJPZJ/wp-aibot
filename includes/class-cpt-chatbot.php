@@ -150,6 +150,15 @@ class AI_Chatbot_CPT_Chatbot {
                     $value = $clean;
                 } elseif ($field === 'chatbot_knowledge_ids' && is_array($value)) {
                     $value = array_map('intval', $value);
+                } elseif ($field === 'chatbot_lead_fields' && is_array($value)) {
+                    // Structured array of field definitions — sanitize each sub-array
+                    $clean = [];
+                    foreach ($value as $item) {
+                        if (is_array($item)) {
+                            $clean[] = array_map('sanitize_text_field', $item);
+                        }
+                    }
+                    $value = $clean;
                 } elseif (is_array($value)) {
                     $value = array_map('sanitize_text_field', $value);
                 } elseif (in_array($field, ['chatbot_system_prompt', 'chatbot_ai_rules'], true)) {
@@ -175,6 +184,9 @@ class AI_Chatbot_CPT_Chatbot {
                 } elseif ($field === 'chatbot_lead_capture_rules' && isset($_POST['chatbot_lead_capture_rules_sentinel'])) {
                     // Rules section was rendered but all rules removed — save empty array
                     update_post_meta($post_id, $field, []);
+                } elseif ($field === 'chatbot_lead_fields' && isset($_POST['chatbot_lead_fields_sentinel'])) {
+                    // Field list was rendered but all fields removed — save empty array
+                    update_post_meta($post_id, $field, []);
                 }
             }
         }
@@ -198,11 +210,15 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_offline_msg'      => 'We are currently offline. Please leave a message.',
             'chatbot_avatar'           => '',
             'chatbot_layout_mode'      => 'inline',
-            'chatbot_lead_fields'      => [],
+            'chatbot_lead_fields'      => [
+                ['name' => 'name',    'placeholder' => 'Name'],
+                ['name' => 'email',   'placeholder' => 'Email'],
+                ['name' => 'whatsapp','placeholder' => 'WhatsApp'],
+            ],
             'chatbot_lead_score_rules' => [],
             'chatbot_lead_capture_enabled' => '1',
             'chatbot_lead_capture_rules'   => [
-                ['field' => 'lead.lead_score', 'operator' => 'gte', 'value' => 'B'],
+                ['field' => 'lead.lead_score', 'operator' => 'in', 'value' => 'A,B'],
                 ['field' => 'lead.email',      'operator' => 'empty', 'value' => ''],
                 ['field' => 'lead.whatsapp',   'operator' => 'empty', 'value' => ''],
             ],
