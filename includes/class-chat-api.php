@@ -122,7 +122,6 @@ class AI_Chatbot_Chat_API {
                     'session_token'    => $session_token,
                     'conversation_id'  => $conversation_id,
                     'lead_score'       => 'D',
-                    'should_notify_sales' => false,
                     'should_collect_contact' => false,
                 ],
             ], 200);
@@ -151,7 +150,6 @@ class AI_Chatbot_Chat_API {
                 'session_token'    => $session_token,
                 'conversation_id'  => $conversation_id,
                 'lead_score'       => $lead_data['lead_score'] ?? 'D',
-                'should_notify_sales' => $parsed['should_notify_sales'] ?? false,
                 'should_collect_contact' => in_array($lead_data['lead_score'] ?? 'D', ['A', 'B']),
             ],
         ], 200);
@@ -159,6 +157,12 @@ class AI_Chatbot_Chat_API {
 
     private static function build_messages(array $config, string $knowledge_context, array $history, string $message): array {
         $system = $config['chatbot_system_prompt'] ?? '';
+
+        // Inject AI behavior rules (security, prompt injection protection)
+        $ai_rules = $config['chatbot_ai_rules'] ?? '';
+        if (!empty(trim($ai_rules))) {
+            $system .= "\n\n---\n\n{$ai_rules}";
+        }
 
         // Inject JSON schema instruction (managed separately from the user prompt)
         $json_schema = $config['chatbot_json_schema'] ?? '';

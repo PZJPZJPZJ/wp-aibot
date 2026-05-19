@@ -7,7 +7,7 @@ class AI_Chatbot_Notifier {
      * Send notifications if any rule matches the parsed AI response.
      * Supports: WeCom (企业微信) Webhook and Email.
      *
-     * @param array $parsed  Full parsed JSON from AI (includes 'answer', 'lead', 'should_notify_sales')
+     * @param array $parsed  Full parsed JSON from AI (includes 'answer', 'lead')
      * @param array $visitor_data
      * @param array $config
      */

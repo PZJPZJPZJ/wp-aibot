@@ -120,7 +120,7 @@
     cursor: pointer;
 }
 .ai-chatbot-checkbox-item:hover {
-    color: #4f46e5;
+    background: #f0f0f1;
 }
 .ai-chatbot-checkbox-item input[type="checkbox"] {
     margin: 0;

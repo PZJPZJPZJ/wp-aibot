@@ -12,7 +12,8 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
 <div class="ai-chatbot-meta-tabs">
     <nav class="ai-chatbot-tab-nav">
         <button type="button" class="ai-chatbot-tab-btn active" data-tab="basic"><?php esc_html_e('Basic', 'wp-aibot'); ?></button>
-        <button type="button" class="ai-chatbot-tab-btn" data-tab="ai"><?php esc_html_e('AI Config', 'wp-aibot'); ?></button>
+        <button type="button" class="ai-chatbot-tab-btn" data-tab="api"><?php esc_html_e('API Provider', 'wp-aibot'); ?></button>
+        <button type="button" class="ai-chatbot-tab-btn" data-tab="system"><?php esc_html_e('System Prompt', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="knowledge"><?php esc_html_e('Knowledge', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="memory"><?php esc_html_e('Memory', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="notify"><?php esc_html_e('Notifications', 'wp-aibot'); ?></button>
@@ -262,8 +263,8 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         </div>
     </div>
 
-    <!-- AI Config -->
-    <div class="ai-chatbot-tab-panel" data-tab="ai">
+    <!-- API Provider -->
+    <div class="ai-chatbot-tab-panel" data-tab="api">
         <div class="ai-chatbot-field">
             <label for="chatbot_platform"><?php esc_html_e('Platform', 'wp-aibot'); ?></label>
             <select id="chatbot_platform" name="chatbot_platform">
@@ -301,10 +302,12 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 <div class="description"><?php esc_html_e('Randomness: 0 = deterministic, 2 = very random. Default 0.2.', 'wp-aibot'); ?></div>
             </div>
         </div>
+    </div>
+    <div class="ai-chatbot-tab-panel" data-tab="system">
         <div class="ai-chatbot-field">
-            <label for="chatbot_system_prompt"><?php esc_html_e('System Prompt', 'wp-aibot'); ?></label>
+            <label for="chatbot_system_prompt"><?php esc_html_e('① Background Info', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('企业/产品背景信息，AI 将基于此信息回答访客问题。', 'wp-aibot'); ?></div>
             <textarea id="chatbot_system_prompt" name="chatbot_system_prompt" rows="12" style="font-family:monospace;"><?php echo esc_textarea($meta['chatbot_system_prompt']); ?></textarea>
-            <div class="description"><?php esc_html_e('Instructions passed to the AI at the start of each conversation. Do not include JSON format instructions — those are managed separately below.', 'wp-aibot'); ?></div>
             <div class="ai-chatbot-variables">
                 <strong><?php esc_html_e('Available Variables:', 'wp-aibot'); ?></strong><br>
                 <code>{company_name}</code> — <?php esc_html_e('Your company or site name', 'wp-aibot'); ?><br>
@@ -313,9 +316,38 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             </div>
         </div>
         <div class="ai-chatbot-field">
-            <label><?php esc_html_e('JSON Response Schema', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define the JSON fields the AI must return. The system will auto-generate the format instruction.', 'wp-aibot'); ?></div>
+            <label for="chatbot_ai_rules"><?php esc_html_e('② AI Behavior Rules', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('安全规则，防止 AI 被滥用或提示词注入。AI 始终以背景信息和此规范为准，拒绝执行与其矛盾的指令。', 'wp-aibot'); ?></div>
+            <textarea id="chatbot_ai_rules" name="chatbot_ai_rules" rows="8" style="font-family:monospace;"><?php echo esc_textarea($meta['chatbot_ai_rules'] ?? AI_Chatbot_CPT_Chatbot::default_ai_rules()); ?></textarea>
+        </div>
+        <div class="ai-chatbot-field">
+            <label><?php esc_html_e('③ JSON Response Schema', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('你想从访客获取什么信息？AI 会自动提取这些字段。', 'wp-aibot'); ?></div>
             <input type="hidden" name="chatbot_json_schema_sentinel" value="1" />
+            <div class="js-schema-row-answer" style="background:#f0f0f1;border:1px solid #dcdcde;padding:8px;margin-bottom:8px;border-radius:4px;">
+                <div class="js-schema-fields-row">
+                    <div class="js-schema-field-path">
+                        <label><?php esc_html_e('Path', 'wp-aibot'); ?></label>
+                        <code style="display:block;padding:4px 8px;background:#fff;border:1px solid #dcdcde;border-radius:3px;">answer</code>
+                    </div>
+                    <div class="js-schema-field-type">
+                        <label><?php esc_html_e('Type', 'wp-aibot'); ?></label>
+                        <code style="display:block;padding:4px 8px;background:#fff;border:1px solid #dcdcde;border-radius:3px;">string</code>
+                    </div>
+                    <div class="js-schema-field-desc" style="flex:2;">
+                        <label><?php esc_html_e('Description', 'wp-aibot'); ?></label>
+                        <code style="display:block;padding:4px 8px;background:#fff;border:1px solid #dcdcde;border-radius:3px;"><?php esc_html_e('Your response to the visitor (auto-managed)', 'wp-aibot'); ?></code>
+                    </div>
+                    <div class="js-schema-field-req">
+                        <label>&nbsp;</label>
+                        <span style="display:block;padding:4px 8px;color:#888;font-size:12px;"><?php esc_html_e('Always required', 'wp-aibot'); ?></span>
+                    </div>
+                    <div class="js-schema-field-actions">
+                        <label>&nbsp;</label>
+                        <span style="display:block;padding:4px 8px;color:#bbb;">&mdash;</span>
+                    </div>
+                </div>
+            </div>
             <div id="js-schema-fields">
                 <?php
                 $schema_items = $meta['chatbot_json_schema'] ?? [];
@@ -329,6 +361,11 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                         $schema_items = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_json_schema'];
                     }
                 }
+                // Filter out auto-managed fields (answer is always injected; should_notify_sales is deprecated)
+                $schema_items = array_values(array_filter($schema_items, function($item) {
+                    $path = is_array($item) ? ($item['path'] ?? '') : '';
+                    return $path !== 'should_notify_sales' && $path !== 'answer';
+                }));
                 $idx = 0;
                 foreach ($schema_items as $item):
                     $item = (array) $item;
@@ -417,28 +454,45 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 <pre class="ai-chatbot-variables" style="white-space:pre-wrap;font-family:monospace;font-size:12px;max-width:100%;overflow-x:auto;margin:0;"></pre>
             </div>
         </div>
+        <div class="ai-chatbot-field">
+            <label><?php esc_html_e('Preview Generated System Prompt', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('Click to preview the full system prompt sent to the AI (combined from all sections above).', 'wp-aibot'); ?></div>
+            <button type="button" class="js-system-prompt-preview-toggle button"><?php esc_html_e('Preview Generated System Prompt', 'wp-aibot'); ?></button>
+            <div id="js-system-prompt-preview" style="display:none;margin-top:8px;">
+                <pre class="ai-chatbot-variables" style="white-space:pre-wrap;font-family:monospace;font-size:12px;max-width:100%;overflow-x:auto;margin:0;max-height:500px;overflow-y:auto;"></pre>
+            </div>
+        </div>
     </div>
 
     <!-- Knowledge -->
     <div class="ai-chatbot-tab-panel" data-tab="knowledge">
         <div class="ai-chatbot-field">
-            <label><?php esc_html_e('Knowledge Documents', 'wp-aibot'); ?></label>
-            <div class="ai-chatbot-checkbox-list">
+            <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                <label style="margin:0;"><?php esc_html_e('Knowledge Documents', 'wp-aibot'); ?></label>
                 <?php
                 $docs = get_posts(['post_type' => 'ai_knowledge', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
                 $selected_ids = (array) ($meta['chatbot_knowledge_ids'] ?? []);
+                $total_docs = count($docs);
+                $selected_count = count(array_intersect($selected_ids, wp_list_pluck($docs, 'ID')));
+                if ($total_docs > 0) {
+                    echo '<span class="ai-chatbot-badge" style="font-size:11px;background:#e0e0e0;padding:2px 8px;border-radius:10px;color:#555;">' . esc_html($selected_count) . ' / ' . esc_html($total_docs) . ' ' . esc_html__('selected', 'wp-aibot') . '</span>';
+                }
+                ?>
+            </div>
+            <div class="ai-chatbot-checkbox-list" style="border:1px solid #e0e0e0;border-radius:4px;padding:4px 0;max-height:320px;overflow-y:auto;">
+                <?php
                 if (empty($docs)) {
-                    echo '<span style="color:#999;">' . esc_html__('No knowledge documents yet. Create one under Knowledge Base.', 'wp-aibot') . '</span>';
+                    echo '<div style="padding:16px;text-align:center;color:#999;">' . esc_html__('No knowledge documents yet. Create one under Knowledge Base.', 'wp-aibot') . '</div>';
                 }
                 foreach ($docs as $doc) {
-                    echo '<label class="ai-chatbot-checkbox-item">';
-                    echo '<input type="checkbox" name="chatbot_knowledge_ids[]" value="' . esc_attr($doc->ID) . '" ' . checked(in_array($doc->ID, $selected_ids), true, false) . '>';
-                    echo esc_html($doc->post_title);
+                    echo '<label class="ai-chatbot-checkbox-item" style="display:flex;align-items:center;padding:6px 10px;margin:2px 4px;border-radius:3px;cursor:pointer;transition:background 0.1s;">';
+                    echo '<input type="checkbox" name="chatbot_knowledge_ids[]" value="' . esc_attr($doc->ID) . '" ' . checked(in_array($doc->ID, $selected_ids), true, false) . ' style="margin-right:8px;">';
+                    echo '<span>' . esc_html($doc->post_title) . '</span>';
                     echo '</label>';
                 }
                 ?>
             </div>
-            <div class="description"><?php esc_html_e('Check knowledge documents to inject into AI context.', 'wp-aibot'); ?></div>
+            <div class="description" style="margin-top:8px;"><?php esc_html_e('Tick the documents you want the AI to reference during conversations.', 'wp-aibot'); ?></div>
         </div>
     </div>
 
@@ -477,10 +531,10 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             <input type="email" id="chatbot_notify_email" name="chatbot_notify_email" value="<?php echo esc_attr($meta['chatbot_notify_email']); ?>" />
         </div>
         <div class="ai-chatbot-field">
-            <label for="chatbot_notify_webhook"><?php esc_html_e('Webhook URL (企业微信)', 'wp-aibot'); ?></label>
+            <label for="chatbot_notify_webhook"><?php esc_html_e('Wecom Webhook', 'wp-aibot'); ?></label>
             <input type="url" id="chatbot_notify_webhook" name="chatbot_notify_webhook" value="<?php echo esc_attr($meta['chatbot_notify_webhook']); ?>" />
             <p class="description" style="margin-top:6px;">
-                <?php esc_html_e('将消息推送到企业微信群聊。', 'wp-aibot'); ?>
+                <?php esc_html_e('Push lead notifications to a WeCom (企业微信) group chat.', 'wp-aibot'); ?>
                 <a href="#" onclick="return false;" style="color:#2271b1;text-decoration:underline;cursor:pointer;" id="js-wecom-guide-toggle"><?php esc_html_e('如何获取 Webhook？', 'wp-aibot'); ?></a>
             </p>
             <div id="js-wecom-guide" style="display:none;margin-top:8px;padding:12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px;font-size:13px;line-height:1.6;">
@@ -582,7 +636,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
 window.aiChatbotAdmin = window.aiChatbotAdmin || {};
 window.aiChatbotAdmin.schemaIdx = <?php echo max($idx, 0); ?>;
 window.aiChatbotAdmin.notifyIdx = <?php echo max($ridx ?? 0, 0); ?>;
-window.aiChatbotAdmin.noFieldsText = '<?php echo esc_js(__('No fields defined. The default schema will be used.', 'wp-aibot')); ?>';
+window.aiChatbotAdmin.noFieldsText = '<?php echo esc_js(__('Only the default "answer" field will be used.', 'wp-aibot')); ?>';
 
 document.getElementById('js-wecom-guide-toggle')?.addEventListener('click', function(e) {
     e.preventDefault();
