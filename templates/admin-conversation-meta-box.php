@@ -78,6 +78,7 @@ defined('ABSPATH') || exit;
                 ];
             }
 
+            echo '<div class="ai-conv-messages-scroll" style="max-height:420px;overflow-y:auto;">';
             echo '<table class="ai-conv-msg-table widefat">';
             foreach ($messages as $msg) {
                 $role = $msg['role'];
@@ -90,6 +91,7 @@ defined('ABSPATH') || exit;
                 echo '</tr>';
             }
             echo '</table>';
+            echo '</div>';
         }
         ?>
     </div>
@@ -130,3 +132,7 @@ defined('ABSPATH') || exit;
         </details>
     </div>
 </div>
+<script>
+var el = document.querySelector('.ai-conv-messages-scroll');
+if (el) el.scrollTop = el.scrollHeight;
+</script>

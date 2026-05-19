@@ -306,23 +306,17 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
     <div class="ai-chatbot-tab-panel" data-tab="system">
         <div class="ai-chatbot-field">
             <label for="chatbot_system_prompt"><?php esc_html_e('① Background Info', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('企业/产品背景信息，AI 将基于此信息回答访客问题。', 'wp-aibot'); ?></div>
+            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('Company/product background. The AI will answer visitor questions based on this information.', 'wp-aibot'); ?></div>
             <textarea id="chatbot_system_prompt" name="chatbot_system_prompt" rows="12" style="font-family:monospace;"><?php echo esc_textarea($meta['chatbot_system_prompt']); ?></textarea>
-            <div class="ai-chatbot-variables">
-                <strong><?php esc_html_e('Available Variables:', 'wp-aibot'); ?></strong><br>
-                <code>{company_name}</code> — <?php esc_html_e('Your company or site name', 'wp-aibot'); ?><br>
-                <code>{knowledge_context}</code> — <?php esc_html_e('Selected knowledge documents (injected automatically)', 'wp-aibot'); ?><br>
-                <code>{conversation_history}</code> — <?php esc_html_e('Previous messages in this session', 'wp-aibot'); ?>
-            </div>
         </div>
         <div class="ai-chatbot-field">
             <label for="chatbot_ai_rules"><?php esc_html_e('② AI Behavior Rules', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('安全规则，防止 AI 被滥用或提示词注入。AI 始终以背景信息和此规范为准，拒绝执行与其矛盾的指令。', 'wp-aibot'); ?></div>
+            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('Security rules to prevent abuse and prompt injection. The AI always follows these rules over any conflicting user instructions.', 'wp-aibot'); ?></div>
             <textarea id="chatbot_ai_rules" name="chatbot_ai_rules" rows="8" style="font-family:monospace;"><?php echo esc_textarea($meta['chatbot_ai_rules'] ?? AI_Chatbot_CPT_Chatbot::default_ai_rules()); ?></textarea>
         </div>
         <div class="ai-chatbot-field">
             <label><?php esc_html_e('③ JSON Response Schema', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('你想从访客获取什么信息？AI 会自动提取这些字段。', 'wp-aibot'); ?></div>
+            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('What information do you want from visitors? The AI will extract these fields automatically.', 'wp-aibot'); ?></div>
             <input type="hidden" name="chatbot_json_schema_sentinel" value="1" />
             <div class="js-schema-row-answer" style="background:#f0f0f1;border:1px solid #dcdcde;padding:8px;margin-bottom:8px;border-radius:4px;">
                 <div class="js-schema-fields-row">
@@ -448,18 +442,6 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             </template>
             <div style="margin-top:8px;">
                 <button type="button" class="js-schema-add-row button">+ <?php esc_html_e('Add Field', 'wp-aibot'); ?></button>
-                <button type="button" class="js-schema-preview-toggle button" style="margin-left:6px;"><?php esc_html_e('Preview Generated Prompt', 'wp-aibot'); ?></button>
-            </div>
-            <div id="js-schema-preview" style="display:none;margin-top:10px;">
-                <pre class="ai-chatbot-variables" style="white-space:pre-wrap;font-family:monospace;font-size:12px;max-width:100%;overflow-x:auto;margin:0;"></pre>
-            </div>
-        </div>
-        <div class="ai-chatbot-field">
-            <label><?php esc_html_e('Preview Generated System Prompt', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:4px;"><?php esc_html_e('Click to preview the full system prompt sent to the AI (combined from all sections above).', 'wp-aibot'); ?></div>
-            <button type="button" class="js-system-prompt-preview-toggle button"><?php esc_html_e('Preview Generated System Prompt', 'wp-aibot'); ?></button>
-            <div id="js-system-prompt-preview" style="display:none;margin-top:8px;">
-                <pre class="ai-chatbot-variables" style="white-space:pre-wrap;font-family:monospace;font-size:12px;max-width:100%;overflow-x:auto;margin:0;max-height:500px;overflow-y:auto;"></pre>
             </div>
         </div>
     </div>
@@ -636,8 +618,6 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
 window.aiChatbotAdmin = window.aiChatbotAdmin || {};
 window.aiChatbotAdmin.schemaIdx = <?php echo max($idx, 0); ?>;
 window.aiChatbotAdmin.notifyIdx = <?php echo max($ridx ?? 0, 0); ?>;
-window.aiChatbotAdmin.noFieldsText = '<?php echo esc_js(__('Only the default "answer" field will be used.', 'wp-aibot')); ?>';
-
 document.getElementById('js-wecom-guide-toggle')?.addEventListener('click', function(e) {
     e.preventDefault();
     var guide = document.getElementById('js-wecom-guide');

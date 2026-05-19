@@ -9,8 +9,6 @@
     var config = window.aiChatbotAdmin || {};
     var schemaIdx = config.schemaIdx || 0;
     var notifyIdx = config.notifyIdx || 0;
-    var noFieldsText = config.noFieldsText || 'No fields defined. The default schema will be used.';
-
     $(document).ready(function() {
         // ===== Tab switching =====
         $('.ai-chatbot-tab-btn').on('click', function() {
@@ -73,99 +71,6 @@
             });
         });
 
-        // Preview generated prompt
-        $('.js-schema-preview-toggle').on('click', function() {
-            var $preview = $('#js-schema-preview');
-            var $preContent = $preview.find('pre');
-
-            if ($preview.is(':visible')) {
-                $preview.hide();
-                return;
-            }
-
-            // Collect current schema data from form
-            var fields = [];
-            $schemaContainer.find('.js-schema-row').each(function() {
-                var $row = $(this);
-                var field = {
-                    path: $row.find('input[name$="[path]"]').val(),
-                    type: $row.find('select[name$="[type]"]').val(),
-                    description: $row.find('input[name$="[description]"]').val(),
-                    enum_values: $row.find('input[name$="[enum_values]"]').val(),
-                    required: $row.find('input[name$="[required]"]').is(':checked') ? '1' : ''
-                };
-                if (field.path) fields.push(field);
-            });
-
-            // Always include answer (auto-managed, not in editable rows); strip deprecated should_notify_sales
-            fields = $.grep(fields, function(f) { return f.path !== 'should_notify_sales'; });
-            fields.unshift({
-                path: 'answer',
-                type: 'string',
-                description: 'your response to the visitor',
-                enum_values: '',
-                required: '1'
-            });
-
-            if (fields.length === 0) {
-                $preContent.text(noFieldsText);
-                $preview.show();
-                return;
-            }
-
-            // Build JSON shape preview
-            var roots = {};
-            var top = [];
-            $.each(fields, function(_, f) {
-                var parts = f.path.split('.');
-                if (parts.length === 1) {
-                    top.push(f);
-                } else {
-                    var parent = parts[0];
-                    if (!roots[parent]) roots[parent] = [];
-                    roots[parent].push(f);
-                }
-            });
-
-            var lines = ['Return ONLY valid JSON, no markdown, no code fences, in this exact shape.'];
-            lines.push('');
-            lines.push('Collect these fields from the conversation as you interact:');
-            $.each(fields, function(_, f) {
-                var desc = f.description || '(collect if mentioned)';
-                lines.push('  ' + f.path + ' — ' + desc);
-            });
-            lines.push('');
-            lines.push('{');
-            var body = [];
-
-            $.each(top, function(_, f) {
-                body.push('  "' + f.path + '": ' + schemaDefaultVal(f));
-            });
-
-            $.each(roots, function(parent, children) {
-                body.push('  "' + parent + '": {');
-                $.each(children, function(_, f) {
-                    var name = f.path.split('.').pop();
-                    body.push('    "' + name + '": ' + schemaDefaultVal(f));
-                });
-                body.push('  }');
-            });
-
-            lines.push(body.join(',\n'));
-            lines.push('}');
-            $preContent.text(lines.join('\n'));
-            $preview.show();
-        });
-
-        function schemaDefaultVal(f) {
-            switch (f.type) {
-                case 'boolean': return 'false';
-                case 'enum': return f.enum_values ? '"' + f.enum_values + '"' : '""';
-                case 'number': return '0';
-                default: return '""';
-            }
-        }
-
         // ===== Notification Rules Builder =====
         var $notifyContainer = $('#js-notify-rules-fields');
         var $notifyTpl = $('#js-notify-rule-tpl');
@@ -207,81 +112,5 @@
                 $faPreview.html('<span style="font-size:20px;">💬</span>');
             }
         }
-
-        // ===== System Prompt Preview =====
-        var $sysPreview = $('#js-system-prompt-preview');
-        var $sysPreContent = $sysPreview.find('pre');
-
-        $(document).on('click', '.js-system-prompt-preview-toggle', function() {
-            if ($sysPreview.is(':visible')) {
-                $sysPreview.hide();
-                return;
-            }
-
-            // Collect schema fields from DOM
-            var fields = [];
-            $('#js-schema-fields').find('.js-schema-row').each(function() {
-                var $row = $(this);
-                var path = $row.find('input[name$="[path]"]').val();
-                if (!path) return;
-                fields.push({
-                    path: path,
-                    type: $row.find('select[name$="[type]"]').val(),
-                    description: $row.find('input[name$="[description]"]').val(),
-                    enum_values: $row.find('input[name$="[enum_values]"]').val(),
-                    required: $row.find('input[name$="[required]"]').is(':checked') ? '1' : ''
-                });
-            });
-
-            // Build JSON instruction (mirrors PHP build_json_instruction)
-            function buildJsonInstruction() {
-                var roots = {}, top = [];
-                $.each(fields, function(_, f) {
-                    if (f.path.indexOf('.') === -1) {
-                        top.push(f);
-                    } else {
-                        var parent = f.path.split('.')[0];
-                        if (!roots[parent]) roots[parent] = [];
-                        roots[parent].push(f);
-                    }
-                });
-
-                var lines = ['Return ONLY valid JSON, no markdown, no code fences, in this exact shape.', ''];
-                lines.push('Collect these fields from the conversation as you interact:');
-                $.each(fields, function(_, f) {
-                    lines.push('  ' + f.path + ' — ' + (f.description || '(collect if mentioned)'));
-                });
-                lines.push('');
-
-                var body = [];
-                $.each(top, function(_, f) {
-                    body.push('  "' + f.path + '": ' + schemaDefaultVal(f));
-                });
-                $.each(roots, function(parent, children) {
-                    body.push('  "' + parent + '": {');
-                    $.each(children, function(_, f) {
-                        body.push('    "' + f.path.split('.').pop() + '": ' + schemaDefaultVal(f));
-                    });
-                    body.push('  }');
-                });
-
-                lines.push('{');
-                lines.push(body.join(',\n'));
-                lines.push('}');
-                return lines.join('\n');
-            }
-
-            var bg = $('#chatbot_system_prompt').val() || '';
-            var rules = $('#chatbot_ai_rules').val() || '';
-            var json = buildJsonInstruction();
-
-            var parts = [];
-            if (bg.trim()) parts.push(bg.trim());
-            if (rules.trim()) parts.push(rules.trim());
-            if (json.trim()) parts.push(json.trim());
-
-            $sysPreContent.text(parts.join('\n\n---\n\n'));
-            $sysPreview.show();
-        });
     });
 })(jQuery);
