@@ -479,7 +479,22 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         <div class="ai-chatbot-field">
             <label for="chatbot_notify_webhook"><?php esc_html_e('Webhook URL (企业微信)', 'wp-aibot'); ?></label>
             <input type="url" id="chatbot_notify_webhook" name="chatbot_notify_webhook" value="<?php echo esc_attr($meta['chatbot_notify_webhook']); ?>" />
-            <div class="description"><?php esc_html_e('WeCom (企业微信) bot webhook URL.', 'wp-aibot'); ?></div>
+            <p class="description" style="margin-top:6px;">
+                <?php esc_html_e('将消息推送到企业微信群聊。', 'wp-aibot'); ?>
+                <a href="#" onclick="return false;" style="color:#2271b1;text-decoration:underline;cursor:pointer;" id="js-wecom-guide-toggle"><?php esc_html_e('如何获取 Webhook？', 'wp-aibot'); ?></a>
+            </p>
+            <div id="js-wecom-guide" style="display:none;margin-top:8px;padding:12px;background:#f6f7f7;border:1px solid #dcdcde;border-radius:4px;font-size:13px;line-height:1.6;">
+                <ol style="margin:0;padding-left:18px;">
+                    <li><?php esc_html_e('打开企业微信，进入目标群聊。', 'wp-aibot'); ?></li>
+                    <li><?php esc_html_e('点击群聊右上角的"..." → "群机器人" → "添加机器人"。', 'wp-aibot'); ?></li>
+                    <li><?php esc_html_e('创建一个新机器人，复制其 Webhook 地址。', 'wp-aibot'); ?></li>
+                    <li><?php esc_html_e('将 Webhook 地址粘贴到上方输入框中。', 'wp-aibot'); ?></li>
+                </ol>
+                <p style="margin:8px 0 0 0;color:#d63638;">
+                    <strong><?php esc_html_e('安全提醒：', 'wp-aibot'); ?></strong>
+                    <?php esc_html_e('Webhook 地址包含密钥，切勿提交到公开代码仓库或分享给他人，否则他人可滥用该地址向群聊推送垃圾消息。', 'wp-aibot'); ?>
+                </p>
+            </div>
         </div>
         <div class="ai-chatbot-field">
             <label><?php esc_html_e('Notification Rules', 'wp-aibot'); ?></label>
@@ -568,4 +583,14 @@ window.aiChatbotAdmin = window.aiChatbotAdmin || {};
 window.aiChatbotAdmin.schemaIdx = <?php echo max($idx, 0); ?>;
 window.aiChatbotAdmin.notifyIdx = <?php echo max($ridx ?? 0, 0); ?>;
 window.aiChatbotAdmin.noFieldsText = '<?php echo esc_js(__('No fields defined. The default schema will be used.', 'wp-aibot')); ?>';
+
+document.getElementById('js-wecom-guide-toggle')?.addEventListener('click', function(e) {
+    e.preventDefault();
+    var guide = document.getElementById('js-wecom-guide');
+    if (guide) {
+        var isHidden = guide.style.display === 'none';
+        guide.style.display = isHidden ? '' : 'none';
+        this.textContent = isHidden ? '<?php echo esc_js(__('收起指南', 'wp-aibot')); ?>' : '<?php echo esc_js(__('如何获取 Webhook？', 'wp-aibot')); ?>';
+    }
+});
 </script>

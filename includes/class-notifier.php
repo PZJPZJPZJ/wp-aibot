@@ -139,8 +139,8 @@ class AI_Chatbot_Notifier {
         wp_remote_post($url, [
             'headers'  => ['Content-Type' => 'application/json'],
             'body'     => wp_json_encode([
-                'msgtype'  => 'markdown',
-                'markdown' => ['content' => $markdown],
+                'msgtype'    => 'markdown_v2',
+                'markdown_v2' => ['content' => $markdown],
             ]),
             'timeout'  => 15,
             'blocking' => false,
@@ -167,22 +167,48 @@ class AI_Chatbot_Notifier {
 
     private function format_wecom_markdown(array $data): string {
         $lines = [
-            "### New AI Chatbot Lead",
-            "**Score:** " . ($data['lead_score'] ?? 'N/A'),
+            "# 新 AI 线索通知",
+            "",
         ];
+
+        $score = $data['lead_score'] ?? 'N/A';
+        $lines[] = "**线索评分:** **$score**";
+        $lines[] = "---";
+        $lines[] = "";
+
+        // Lead fields table
+        $rows = [];
+        foreach ($data as $key => $value) {
+            if ($key === 'visitor' || is_array($value)) {
+                continue;
+            }
+            $label = ucwords(str_replace(['_', '-'], ' ', $key));
+            $rows[] = "| $label | " . (is_string($value) ? $value : '') . " |";
+        }
+
+        if (!empty($rows)) {
+            $lines[] = "| 字段 | 内容 |";
+            $lines[] = "| :--- | :--- |";
+            $lines = array_merge($lines, $rows);
+            $lines[] = "";
+            $lines[] = "---";
+            $lines[] = "";
+        }
 
         if (isset($data['visitor'])) {
             $visitor = $data['visitor'];
-            $lines[] = "**Visitor IP:** " . ($visitor['ip'] ?? 'N/A');
-            $lines[] = "**Page:** " . ($visitor['page_url'] ?? 'N/A');
-            unset($data['visitor']);
+            $lines[] = "**访问者信息**";
+            $lines[] = "";
+            $lines[] = "| 字段 | 内容 |";
+            $lines[] = "| :--- | :--- |";
+            $lines[] = "| IP | " . ($visitor['ip'] ?? 'N/A') . " |";
+            $lines[] = "| 页面 | " . ($visitor['page_url'] ?? 'N/A') . " |";
+            $lines[] = "";
+            $lines[] = "---";
         }
 
-        foreach ($data as $key => $value) {
-            if (!is_array($value)) {
-                $lines[] = "**{$key}:** {$value}";
-            }
-        }
+        $lines[] = "";
+        $lines[] = "> *此通知由 AI Chatbot 插件自动发送*";
 
         return implode("\n", $lines);
     }
