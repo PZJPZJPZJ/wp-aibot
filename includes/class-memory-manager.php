@@ -16,21 +16,40 @@ class AI_Chatbot_Memory_Manager {
             return [];
         }
 
-        $lines = explode("\n", trim($history));
+        $lines = explode("\n", $history);
         $messages = [];
-        $count = 0;
+        $current_role = null;
+        $current_content = [];
 
-        // Parse Markdown history format and take last N exchanges
-        foreach (array_reverse($lines) as $line) {
-            if ($count >= $max_history * 2) break;
-
-            if (preg_match('/^\*\*User:\*\*\s*(.+)$/', $line, $m)) {
-                array_unshift($messages, ['role' => 'user', 'content' => trim($m[1])]);
-                $count++;
-            } elseif (preg_match('/^\*\*Assistant:\*\*\s*(.+)$/', $line, $m)) {
-                array_unshift($messages, ['role' => 'assistant', 'content' => trim($m[1])]);
-                $count++;
+        // Parse multi-line messages: accumulate content until next marker
+        foreach ($lines as $line) {
+            $line = rtrim($line);
+            if (preg_match('/^\*\*(User|Assistant):\*\*\s*(.*)$/', $line, $m)) {
+                // Save previous message
+                if ($current_role !== null) {
+                    $messages[] = [
+                        'role'    => $current_role,
+                        'content' => implode("\n", $current_content),
+                    ];
+                }
+                $current_role = strtolower($m[1]);
+                $current_content = [trim($m[2])];
+            } elseif ($current_role !== null) {
+                $current_content[] = $line;
             }
+        }
+        // Save last message
+        if ($current_role !== null) {
+            $messages[] = [
+                'role'    => $current_role,
+                'content' => implode("\n", $current_content),
+            ];
+        }
+
+        // Keep only the last N complete rounds (user + assistant pairs)
+        $total = count($messages);
+        if ($total > $max_history * 2) {
+            $messages = array_slice($messages, $total - $max_history * 2);
         }
 
         return $messages;
