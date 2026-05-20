@@ -7,6 +7,8 @@
  * Requires PHP: 8.0
  * Plugin URI: https://github.com/pzjpzjpzj/wp-aibot
  * Author: AzzDev
+ * License: GPL v2 or later
+ * License URI: https://www.gnu.org/licenses/gpl-2.0.html
  * Update URI: https://api.github.com/repos/pzjpzjpzj/wp-aibot
  * Text Domain: wp-aibot
  */

@@ -148,7 +148,7 @@
                         <div class="ai-chatbot-messages"></div>
                         <div class="ai-chatbot-input-area">
                             <textarea class="ai-chatbot-input" placeholder="${i18n.input_placeholder || 'Type your message...'}" rows="1"></textarea>
-                            <button class="ai-chatbot-send">➤</button>
+                            <button type="button" class="ai-chatbot-send">➤</button>
                         </div>
                     </div>
                 `;
@@ -162,7 +162,7 @@
                         <div class="ai-chatbot-messages"></div>
                         <div class="ai-chatbot-input-area">
                             <textarea class="ai-chatbot-input" placeholder="${i18n.input_placeholder || 'Type your message...'}" rows="1"></textarea>
-                            <button class="ai-chatbot-send">➤</button>
+                            <button type="button" class="ai-chatbot-send">➤</button>
                         </div>
                     </div>
                 `;
@@ -222,6 +222,7 @@
                         this.popupEl.style.right = 'auto';
                         this.popupEl.style.left = '16px';
                     }
+                    this.scrollToBottom();
                 }.bind(this));
                 if (this.inputEl) {
                     this.inputEl.focus();
@@ -367,7 +368,7 @@
                 var type = f.name && f.name.toLowerCase().indexOf('email') !== -1 ? 'email' : 'text';
                 html += '<input type="' + type + '" placeholder="' + (f.placeholder || f.name) + '" data-field="' + (f.name || '') + '" class="ai-chat-contact-input" />';
             }
-            html += '<button class="ai-chat-contact-submit">Submit</button>';
+            html += '<button type="button" class="ai-chat-contact-submit">Submit</button>';
 
             const div = document.createElement('div');
             div.className = 'ai-chatbot-message ai-chatbot-bot';

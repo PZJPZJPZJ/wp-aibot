@@ -108,8 +108,8 @@ class AI_Chatbot_Plugin {
             'widget_id'     => $widget_id,
             'ripple_enabled'   => $config['chatbot_fab_ripple_enabled'] ?? '0',
             'ripple_color'     => $config['chatbot_fab_ripple_color'] ?: '',
-            'ripple_opacity'   => $config['chatbot_fab_ripple_opacity'] ?: '0.4',
-            'ripple_speed'     => $config['chatbot_fab_ripple_speed'] ?: '1.5',
+            'ripple_opacity'   => $config['chatbot_fab_ripple_opacity'] ?: '0.2',
+            'ripple_speed'     => $config['chatbot_fab_ripple_speed'] ?: '1',
             'ripple_radius'    => $config['chatbot_fab_ripple_radius'] ?: '2.5',
             'icon_shake'       => $config['chatbot_fab_icon_shake'] ?? '0',
             'lead_fields'      => is_array($config['chatbot_lead_fields'] ?? null) ? $config['chatbot_lead_fields'] : [],
@@ -130,8 +130,8 @@ class AI_Chatbot_Plugin {
         $popup_color = $config['chatbot_popup_color'] ?? $config['chatbot_primary_color'] ?? '';
         $button_color = $config['chatbot_button_color'] ?? $config['chatbot_primary_color'] ?? '';
         $ripple_color = $config['chatbot_fab_ripple_color'] ?: $button_color;
-        $ripple_opacity = $config['chatbot_fab_ripple_opacity'] ?: '0.4';
-        $ripple_speed = $config['chatbot_fab_ripple_speed'] ?: '1.5';
+        $ripple_opacity = $config['chatbot_fab_ripple_opacity'] ?: '0.2';
+        $ripple_speed = $config['chatbot_fab_ripple_speed'] ?: '1';
         $ripple_radius = $config['chatbot_fab_ripple_radius'] ?: '2.5';
         $fab_position = $config['chatbot_fab_position'] ?: 'bottom-right';
         $fab_dist_x = $config['chatbot_fab_distance_x'] ?: '24';
