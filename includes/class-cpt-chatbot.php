@@ -121,6 +121,11 @@ class AI_Chatbot_CPT_Chatbot {
                     foreach ($value as $i => $item) {
                         if (is_array($item)) {
                             $value[$i] = array_map('sanitize_text_field', $item);
+                            // Auto-add lead. prefix to field path
+                            $fpath = $value[$i]['field'] ?? '';
+                            if ($fpath !== '' && !str_starts_with($fpath, 'lead.')) {
+                                $value[$i]['field'] = 'lead.' . $fpath;
+                            }
                         }
                     }
                 } elseif ($field === 'chatbot_lead_capture_rules' && is_string($value)) {
@@ -131,6 +136,11 @@ class AI_Chatbot_CPT_Chatbot {
                     foreach ($value as $i => $item) {
                         if (is_array($item)) {
                             $value[$i] = array_map('sanitize_text_field', $item);
+                            // Auto-add lead. prefix to field path
+                            $fpath = $value[$i]['field'] ?? '';
+                            if ($fpath !== '' && !str_starts_with($fpath, 'lead.')) {
+                                $value[$i]['field'] = 'lead.' . $fpath;
+                            }
                         }
                     }
                 } elseif ($field === 'chatbot_json_schema' && is_array($value)) {
@@ -142,8 +152,13 @@ class AI_Chatbot_CPT_Chatbot {
                         }
                         $item = array_map('sanitize_text_field', $item);
                         $path = $item['path'] ?? '';
-                        if ($path === 'should_notify_sales' || $path === 'answer') {
+                        if ($path === 'should_notify_sales' || $path === 'answer' || $path === 'summary') {
                             continue;
+                        }
+                        // Auto-add lead. prefix
+                        if ($path !== '' && !str_starts_with($path, 'lead.')) {
+                            $path = 'lead.' . $path;
+                            $item['path'] = $path;
                         }
                         $clean[] = $item;
                     }
@@ -235,12 +250,12 @@ class AI_Chatbot_CPT_Chatbot {
                 'input_placeholder' => 'Type your message...',
                 'thinking_text'     => 'Thinking...',
             ],
-            'chatbot_primary_color'    => '#4f46e5',
-            'chatbot_popup_color'      => '#4f46e5',
-            'chatbot_button_color'     => '#4f46e5',
+            'chatbot_primary_color'    => '#25b366',
+            'chatbot_popup_color'      => '#25b366',
+            'chatbot_button_color'     => '#25b366',
             'chatbot_fab_icon'         => 'fa-comment',
             'chatbot_fab_ripple_enabled' => '0',
-            'chatbot_fab_ripple_color'   => '',
+            'chatbot_fab_ripple_color'   => '#25b366',
             'chatbot_fab_ripple_opacity' => '0.2',
             'chatbot_fab_ripple_speed'   => '1',
             'chatbot_fab_ripple_radius'  => '2.5',
@@ -346,7 +361,6 @@ You are a professional sales-oriented AI assistant for a company website. Your p
             ['path' => 'lead.country',        'type' => 'string', 'description' => 'Visitor country',   'required' => false],
             ['path' => 'lead.city',           'type' => 'string', 'description' => 'Visitor city',      'required' => false],
             ['path' => 'lead.project_type',   'type' => 'string', 'description' => 'Project type/requirements', 'required' => false],
-            ['path' => 'lead.summary',        'type' => 'string', 'description' => 'Conversation summary', 'required' => false],
         ];
     }
 
@@ -362,13 +376,14 @@ You are a professional sales-oriented AI assistant for a company website. Your p
             $schema = [];
         }
 
-        // Normalize: always inject answer; strip should_notify_sales (deprecated)
+        // Normalize: always inject answer and summary; strip should_notify_sales (deprecated)
         $clean = [
             ['path' => 'answer', 'type' => 'string', 'description' => 'your response to the visitor', 'required' => true],
+            ['path' => 'summary', 'type' => 'string', 'description' => 'concise conversation summary (keep under 300 words)', 'required' => false],
         ];
         foreach ($schema as $field) {
             $path = $field['path'] ?? '';
-            if ($path === 'answer' || $path === 'should_notify_sales') {
+            if ($path === 'answer' || $path === 'should_notify_sales' || $path === 'summary') {
                 continue;
             }
             $clean[] = $field;

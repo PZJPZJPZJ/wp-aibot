@@ -96,8 +96,11 @@ class AI_Chatbot_Chat_API {
         $memory = new AI_Chatbot_Memory_Manager();
         $history = $memory->load_history($conversation_id, (int) $config['chatbot_max_history']);
 
+        // Load existing summary for AI context (preserves key info beyond max history limit)
+        $existing_summary = get_post_meta($conversation_id, 'conversation_summary', true);
+
         // Build messages
-        $messages = self::build_messages($config, $knowledge_context, $history, $message);
+        $messages = self::build_messages($config, $knowledge_context, $history, $message, $existing_summary);
 
         // Call AI
         $ai_client = new AI_Chatbot_AI_Client($config);
@@ -136,6 +139,11 @@ class AI_Chatbot_Chat_API {
         // Save lead data
         if (!empty($lead_data)) {
             update_post_meta($conversation_id, 'conversation_lead_data', $lead_data);
+        }
+
+        // Save conversation summary separately (not part of lead data)
+        if (!empty($parsed['summary'])) {
+            update_post_meta($conversation_id, 'conversation_summary', $parsed['summary']);
         }
 
         // Trigger notification if rules match (pass full parsed data for rule evaluation)
@@ -258,7 +266,7 @@ class AI_Chatbot_Chat_API {
         return $current;
     }
 
-    private static function build_messages(array $config, string $knowledge_context, array $history, string $message): array {
+    private static function build_messages(array $config, string $knowledge_context, array $history, string $message, string $summary = ''): array {
         $system = $config['chatbot_system_prompt'] ?? '';
 
         // Inject AI behavior rules (security, prompt injection protection)
@@ -279,6 +287,11 @@ class AI_Chatbot_Chat_API {
         // Inject knowledge context
         if (!empty($knowledge_context)) {
             $system .= "\n\n---\n\nKnowledge Base:\n{$knowledge_context}\n\n---";
+        }
+
+        // Inject previous conversation summary (allows AI to recall key info beyond max history)
+        if (!empty($summary)) {
+            $system .= "\n\n---\n\nPrevious Conversation Summary:\n{$summary}";
         }
 
         $messages = [['role' => 'system', 'content' => $system]];

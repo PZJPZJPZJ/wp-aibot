@@ -151,8 +151,8 @@ class AI_Chatbot_Plugin {
         $style_output .= ' --fab-y: ' . esc_attr($fab_dist_y) . 'px;';
         $style_output .= ' --hint-bg: ' . esc_attr($hint_bg) . ';';
         $style_output .= ' --hint-text: ' . esc_attr($hint_text) . ';';
-        $safe_popup = esc_attr($popup_color ?: '#4f46e5');
-        $safe_button = esc_attr($button_color ?: '#4f46e5');
+        $safe_popup = esc_attr($popup_color ?: '#25b366');
+        $safe_button = esc_attr($button_color ?: '#25b366');
         $style_output .= ' --ai-chatbot-primary: ' . $safe_button . ';';
         $style_output .= ' --ai-chatbot-popup: ' . $safe_popup . ';';
         $style_output .= ' --ai-chatbot-button: ' . $safe_button . ';';

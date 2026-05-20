@@ -316,33 +316,9 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             <textarea id="chatbot_ai_rules" name="chatbot_ai_rules" rows="8" style="font-family:monospace;"><?php echo esc_textarea($meta['chatbot_ai_rules'] ?? AI_Chatbot_CPT_Chatbot::default_ai_rules()); ?></textarea>
         </div>
         <div class="ai-chatbot-field">
-            <label><?php esc_html_e('③ JSON Response Schema', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('What information do you want from visitors? The AI will extract these fields automatically.', 'wp-aibot'); ?></div>
+            <label><?php esc_html_e('③ Lead Collection Items', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define what visitor information the AI should collect. The field name is auto-prefixed with "lead." when sent to the AI.', 'wp-aibot'); ?></div>
             <input type="hidden" name="chatbot_json_schema_sentinel" value="1" />
-            <div class="js-schema-row-answer" style="background:#f0f0f1;border:1px solid #dcdcde;padding:8px;margin-bottom:8px;border-radius:4px;">
-                <div class="js-schema-fields-row">
-                    <div class="js-schema-field-path">
-                        <label><?php esc_html_e('Path', 'wp-aibot'); ?></label>
-                        <code style="display:block;padding:4px 8px;background:#fff;border:1px solid #dcdcde;border-radius:3px;">answer</code>
-                    </div>
-                    <div class="js-schema-field-type">
-                        <label><?php esc_html_e('Type', 'wp-aibot'); ?></label>
-                        <code style="display:block;padding:4px 8px;background:#fff;border:1px solid #dcdcde;border-radius:3px;">string</code>
-                    </div>
-                    <div class="js-schema-field-desc" style="flex:2;">
-                        <label><?php esc_html_e('Description', 'wp-aibot'); ?></label>
-                        <code style="display:block;padding:4px 8px;background:#fff;border:1px solid #dcdcde;border-radius:3px;"><?php esc_html_e('Your response to the visitor (auto-managed)', 'wp-aibot'); ?></code>
-                    </div>
-                    <div class="js-schema-field-req">
-                        <label>&nbsp;</label>
-                        <span style="display:block;padding:4px 8px;color:#888;font-size:12px;"><?php esc_html_e('Always required', 'wp-aibot'); ?></span>
-                    </div>
-                    <div class="js-schema-field-actions">
-                        <label>&nbsp;</label>
-                        <span style="display:block;padding:4px 8px;color:#bbb;">&mdash;</span>
-                    </div>
-                </div>
-            </div>
             <div id="js-schema-fields">
                 <?php
                 $schema_items = $meta['chatbot_json_schema'] ?? [];
@@ -356,10 +332,10 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                         $schema_items = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_json_schema'];
                     }
                 }
-                // Filter out auto-managed fields (answer is always injected; should_notify_sales is deprecated)
+                // Filter out auto-managed fields (answer and summary are always injected; should_notify_sales is deprecated)
                 $schema_items = array_values(array_filter($schema_items, function($item) {
                     $path = is_array($item) ? ($item['path'] ?? '') : '';
-                    return $path !== 'should_notify_sales' && $path !== 'answer';
+                    return $path !== 'should_notify_sales' && $path !== 'answer' && $path !== 'summary';
                 }));
                 $idx = 0;
                 foreach ($schema_items as $item):
@@ -368,8 +344,11 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 <div class="js-schema-row" data-index="<?php echo $idx; ?>">
                     <div class="js-schema-fields-row">
                         <div class="js-schema-field-path">
-                            <label><?php esc_html_e('Path', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_json_schema[<?php echo $idx; ?>][path]" value="<?php echo esc_attr($item['path'] ?? ''); ?>" placeholder="e.g. lead.email" style="width:100%;" />
+                            <label><?php esc_html_e('Field Name', 'wp-aibot'); ?></label>
+                            <div style="display:flex;align-items:center;">
+                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                <input type="text" name="chatbot_json_schema[<?php echo $idx; ?>][path]" value="<?php echo esc_attr(preg_replace('/^lead\./', '', $item['path'] ?? '')); ?>" placeholder="e.g. email" style="flex:1;min-width:0;" />
+                            </div>
                         </div>
                         <div class="js-schema-field-type">
                             <label><?php esc_html_e('Type', 'wp-aibot'); ?></label>
@@ -407,8 +386,11 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 <div class="js-schema-row" data-index="__IDX__">
                     <div class="js-schema-fields-row">
                         <div class="js-schema-field-path">
-                            <label><?php esc_html_e('Path', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_json_schema[__IDX__][path]" value="" placeholder="e.g. lead.email" style="width:100%;" />
+                            <label><?php esc_html_e('Field Name', 'wp-aibot'); ?></label>
+                            <div style="display:flex;align-items:center;">
+                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                <input type="text" name="chatbot_json_schema[__IDX__][path]" value="" placeholder="e.g. email" style="flex:1;min-width:0;" />
+                            </div>
                         </div>
                         <div class="js-schema-field-type">
                             <label><?php esc_html_e('Type', 'wp-aibot'); ?></label>
@@ -588,7 +570,10 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                     <div class="js-notify-fields-row">
                         <div class="js-notify-field-path">
                             <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][field]" value="<?php echo esc_attr($rule['field'] ?? ''); ?>" placeholder="lead.lead_score" style="width:100%;" />
+                            <div style="display:flex;align-items:center;">
+                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                <input type="text" name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][field]" value="<?php echo esc_attr(preg_replace('/^lead\./', '', $rule['field'] ?? '')); ?>" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                            </div>
                         </div>
                         <div class="js-notify-field-operator">
                             <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
@@ -622,7 +607,10 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                     <div class="js-notify-fields-row">
                         <div class="js-notify-field-path">
                             <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_lead_capture_rules[__CIDX__][field]" value="" placeholder="lead.lead_score" style="width:100%;" />
+                            <div style="display:flex;align-items:center;">
+                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                <input type="text" name="chatbot_lead_capture_rules[__CIDX__][field]" value="" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                            </div>
                         </div>
                         <div class="js-notify-field-operator">
                             <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
@@ -710,7 +698,10 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                     <div class="js-notify-fields-row">
                         <div class="js-notify-field-path">
                             <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_notify_rules[<?php echo $ridx; ?>][field]" value="<?php echo esc_attr($rule['field'] ?? ''); ?>" placeholder="lead.lead_score" style="width:100%;" />
+                            <div style="display:flex;align-items:center;">
+                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                <input type="text" name="chatbot_notify_rules[<?php echo $ridx; ?>][field]" value="<?php echo esc_attr(preg_replace('/^lead\./', '', $rule['field'] ?? '')); ?>" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                            </div>
                         </div>
                         <div class="js-notify-field-operator">
                             <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
@@ -740,7 +731,10 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                     <div class="js-notify-fields-row">
                         <div class="js-notify-field-path">
                             <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_notify_rules[__RIDX__][field]" value="" placeholder="lead.lead_score" style="width:100%;" />
+                            <div style="display:flex;align-items:center;">
+                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                <input type="text" name="chatbot_notify_rules[__RIDX__][field]" value="" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                            </div>
                         </div>
                         <div class="js-notify-field-operator">
                             <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>

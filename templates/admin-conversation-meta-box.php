@@ -18,7 +18,7 @@ defined('ABSPATH') || exit;
  */
 ?>
 <div class="ai-conv-wrap">
-    <!-- Summary -->
+    <!-- Overview (includes visitor info and summary) -->
     <div class="ai-conv-section">
         <h3><?php esc_html_e('Overview', 'wp-aibot'); ?></h3>
         <table class="widefat striped">
@@ -37,21 +37,16 @@ defined('ABSPATH') || exit;
                 ];
                 echo '<tr><th>' . __('Notification', 'wp-aibot') . '</th><td>' . (isset($labels[$notify_status]) ? $labels[$notify_status] : esc_html($notify_status)) . '</td></tr>';
             endif;
+            $conv_summary = get_post_meta($post->ID, 'conversation_summary', true);
+            if (!empty($conv_summary)):
+            ?><tr><th><?php esc_html_e('Summary', 'wp-aibot'); ?></th><td><?php echo esc_html($conv_summary); ?></td></tr><?php
+            endif;
             ?>
-        </table>
-    </div>
-
-    <!-- Visitor Info -->
-    <?php if ($ip || $ua || $page_url): ?>
-    <div class="ai-conv-section">
-        <h3><?php esc_html_e('Visitor', 'wp-aibot'); ?></h3>
-        <table class="widefat striped">
             <?php if ($ip): ?><tr><th><?php esc_html_e('IP', 'wp-aibot'); ?></th><td><?php echo esc_html($ip); ?></td></tr><?php endif; ?>
             <?php if ($ua): ?><tr><th><?php esc_html_e('User Agent', 'wp-aibot'); ?></th><td style="font-size:12px;word-break:break-all;"><?php echo esc_html($ua); ?></td></tr><?php endif; ?>
             <?php if ($page_url): ?><tr><th><?php esc_html_e('Page URL', 'wp-aibot'); ?></th><td><a href="<?php echo esc_url($page_url); ?>" target="_blank"><?php echo esc_html($page_url); ?></a></td></tr><?php endif; ?>
         </table>
     </div>
-    <?php endif; ?>
 
     <!-- Messages -->
     <div class="ai-conv-section">
