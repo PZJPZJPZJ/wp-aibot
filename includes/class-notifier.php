@@ -18,6 +18,14 @@ class AI_Chatbot_Notifier {
             return;
         }
 
+        // Skip if already notified for this conversation (deduplication)
+        if ($conversation_id > 0) {
+            $existing_status = get_post_meta($conversation_id, 'conversation_notification_status', true);
+            if ($existing_status === 'sent') {
+                return;
+            }
+        }
+
         if (!$this->should_notify($parsed, $config)) {
             $this->save_status($conversation_id, 'none');
             return;
@@ -34,12 +42,12 @@ class AI_Chatbot_Notifier {
 
         // Webhook (企业微信)
         if ($has_webhook) {
-            $webhook_ok = $this->send_webhook($config['chatbot_notify_webhook'], $payload);
+            $webhook_ok = $this->send_webhook($config['chatbot_notify_webhook'], $payload, $conversation_id);
         }
 
         // Email
         if ($has_email) {
-            $email_ok = $this->send_email($config['chatbot_notify_email'], $payload);
+            $email_ok = $this->send_email($config['chatbot_notify_email'], $payload, $conversation_id);
         }
 
         // Determine overall status
@@ -175,8 +183,8 @@ class AI_Chatbot_Notifier {
         return $current;
     }
 
-    private function send_webhook(string $url, array $payload): bool {
-        $markdown = $this->format_wecom_markdown($payload);
+    private function send_webhook(string $url, array $payload, int $conversation_id = 0): bool {
+        $markdown = $this->format_wecom_markdown($payload, $conversation_id);
 
         $response = wp_remote_post($url, [
             'headers'  => ['Content-Type' => 'application/json'],
@@ -195,25 +203,19 @@ class AI_Chatbot_Notifier {
         return $code >= 200 && $code < 300;
     }
 
-    private function send_email(string $to, array $payload): bool {
+    private function send_email(string $to, array $payload, int $conversation_id = 0): bool {
         $subject = sprintf(
             '[AI Chatbot] New Lead - Score %s',
             $payload['lead_score'] ?? 'N/A'
         );
 
-        $body = "Lead Details:\n\n";
-        foreach ($payload as $key => $value) {
-            if (is_array($value)) {
-                $body .= "$key: " . print_r($value, true) . "\n";
-            } else {
-                $body .= "$key: $value\n";
-            }
-        }
+        $body = $this->format_email_html($payload, $conversation_id);
+        $headers = ['Content-Type: text/html; charset=UTF-8'];
 
-        return wp_mail($to, $subject, $body);
+        return wp_mail($to, $subject, $body, $headers);
     }
 
-    private function format_wecom_markdown(array $data): string {
+    private function format_wecom_markdown(array $data, int $conversation_id = 0): string {
         $lines = [
             "# 新 AI 线索通知",
             "",
@@ -255,9 +257,72 @@ class AI_Chatbot_Notifier {
             $lines[] = "---";
         }
 
+        // Conversation history link
+        if ($conversation_id > 0) {
+            $url = admin_url('post.php?post=' . $conversation_id . '&action=edit');
+            $lines[] = "";
+            $lines[] = "> [查看对话历史]($url)";
+            $lines[] = "";
+        }
+
         $lines[] = "";
         $lines[] = "> *此通知由 AI Chatbot 插件自动发送*";
 
         return implode("\n", $lines);
+    }
+
+    private function format_email_html(array $data, int $conversation_id = 0): string {
+        $score = $data['lead_score'] ?? 'N/A';
+
+        $html = '<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:20px;color:#333;">';
+        $html .= '<h2 style="color:#25b366;margin-bottom:4px;">🔔 New Lead Notification</h2>';
+        $html .= '<p style="color:#666;font-size:13px;margin-top:0;">AI Chatbot Plugin</p>';
+        $html .= '<hr style="border:none;border-top:1px solid #e0e0e0;">';
+
+        $html .= '<p><strong style="color:#555;">Lead Score:</strong> <span style="font-weight:700;color:#25b366;">' . esc_html($score) . '</span></p>';
+        $html .= '<hr style="border:none;border-top:1px solid #e0e0e0;">';
+
+        // Lead fields table
+        $rows = '';
+        foreach ($data as $key => $value) {
+            if ($key === 'visitor' || is_array($value)) {
+                continue;
+            }
+            $label = ucwords(str_replace(['_', '-'], ' ', $key));
+            $val   = is_string($value) ? esc_html($value) : '';
+            $rows .= '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f9f9f9;font-weight:500;width:120px;">' . esc_html($label) . '</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . $val . '</td></tr>';
+        }
+
+        if (!empty($rows)) {
+            $html .= '<table style="width:100%;border-collapse:collapse;margin:12px 0;">';
+            $html .= '<thead><tr><th style="padding:8px 10px;border:1px solid #e0e0e0;background:#25b366;color:#fff;text-align:left;">Field</th><th style="padding:8px 10px;border:1px solid #e0e0e0;background:#25b366;color:#fff;text-align:left;">Value</th></tr></thead>';
+            $html .= '<tbody>' . $rows . '</tbody></table>';
+        }
+
+        // Visitor info
+        if (isset($data['visitor'])) {
+            $visitor = $data['visitor'];
+            $html .= '<hr style="border:none;border-top:1px solid #e0e0e0;">';
+            $html .= '<h3 style="color:#555;font-size:14px;">Visitor Information</h3>';
+            $html .= '<table style="width:100%;border-collapse:collapse;margin:8px 0;">';
+            $html .= '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f9f9f9;font-weight:500;width:120px;">IP</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . esc_html($visitor['ip'] ?? 'N/A') . '</td></tr>';
+            $html .= '<tr><td style="padding:6px 10px;border:1px solid #e0e0e0;background:#f9f9f9;font-weight:500;width:120px;">Page</td><td style="padding:6px 10px;border:1px solid #e0e0e0;">' . esc_html($visitor['page_url'] ?? 'N/A') . '</td></tr>';
+            $html .= '</table>';
+        }
+
+        // Conversation history link
+        if ($conversation_id > 0) {
+            $url = admin_url('post.php?post=' . $conversation_id . '&action=edit');
+            $html .= '<hr style="border:none;border-top:1px solid #e0e0e0;">';
+            $html .= '<p style="text-align:center;margin:16px 0 0;">';
+            $html .= '<a href="' . esc_url($url) . '" style="display:inline-block;padding:10px 20px;background:#25b366;color:#fff;text-decoration:none;border-radius:4px;font-size:14px;">📋 View Conversation History</a>';
+            $html .= '</p>';
+        }
+
+        $html .= '<hr style="border:none;border-top:1px solid #e0e0e0;">';
+        $html .= '<p style="font-size:11px;color:#999;text-align:center;">This notification was sent automatically by the AI Chatbot plugin.</p>';
+        $html .= '</div>';
+
+        return $html;
     }
 }
