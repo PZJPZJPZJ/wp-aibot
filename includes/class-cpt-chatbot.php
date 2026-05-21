@@ -116,33 +116,32 @@ class AI_Chatbot_CPT_Chatbot {
                 if ($field === 'chatbot_notify_rules' && is_string($value)) {
                     $decoded = json_decode($value, true);
                     $value = is_array($decoded) ? $decoded : [];
-                } elseif ($field === 'chatbot_notify_rules' && is_array($value)) {
-                    // Structured array from interactive UI — sanitize each field
-                    foreach ($value as $i => $item) {
-                        if (is_array($item)) {
-                            $value[$i] = array_map('sanitize_text_field', $item);
-                            // Auto-add lead. prefix to field path
-                            $fpath = $value[$i]['field'] ?? '';
-                            if ($fpath !== '' && !str_starts_with($fpath, 'lead.')) {
-                                $value[$i]['field'] = 'lead.' . $fpath;
+                } elseif (in_array($field, ['chatbot_notify_rules', 'chatbot_lead_capture_rules'], true) && is_array($value)) {
+                    // Grouped rules array: [ [ [field,operator,value], ... ], ... ]
+                    // Sanitize each condition within each group
+                    $clean = [];
+                    foreach ($value as $gi => $group) {
+                        if (!is_array($group)) {
+                            continue;
+                        }
+                        $clean_group = [];
+                        foreach ($group as $ci => $condition) {
+                            if (!is_array($condition)) {
+                                continue;
                             }
+                            $condition = array_map('sanitize_text_field', $condition);
+                            // Auto-add lead. prefix to field path
+                            $fpath = $condition['field'] ?? '';
+                            if ($fpath !== '' && !str_starts_with($fpath, 'lead.')) {
+                                $condition['field'] = 'lead.' . $fpath;
+                            }
+                            $clean_group[] = $condition;
+                        }
+                        if (!empty($clean_group)) {
+                            $clean[] = $clean_group;
                         }
                     }
-                } elseif ($field === 'chatbot_lead_capture_rules' && is_string($value)) {
-                    $decoded = json_decode($value, true);
-                    $value = is_array($decoded) ? $decoded : [];
-                } elseif ($field === 'chatbot_lead_capture_rules' && is_array($value)) {
-                    // Structured array from interactive UI — sanitize each field
-                    foreach ($value as $i => $item) {
-                        if (is_array($item)) {
-                            $value[$i] = array_map('sanitize_text_field', $item);
-                            // Auto-add lead. prefix to field path
-                            $fpath = $value[$i]['field'] ?? '';
-                            if ($fpath !== '' && !str_starts_with($fpath, 'lead.')) {
-                                $value[$i]['field'] = 'lead.' . $fpath;
-                            }
-                        }
-                    }
+                    $value = $clean;
                 } elseif ($field === 'chatbot_json_schema' && is_array($value)) {
                     // Structured array from interactive UI — sanitize each field, strip auto-managed fields
                     $clean = [];
@@ -233,16 +232,25 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_lead_score_rules' => [],
             'chatbot_lead_capture_enabled' => '1',
             'chatbot_lead_capture_rules'   => [
-                ['field' => 'lead.lead_score', 'operator' => 'in', 'value' => 'A,B'],
-                ['field' => 'lead.email',      'operator' => 'empty', 'value' => ''],
-                ['field' => 'lead.whatsapp',   'operator' => 'empty', 'value' => ''],
+                [ // Group 1: lead_score A|B AND email empty AND whatsapp empty
+                    ['field' => 'lead.lead_score', 'operator' => 'in',    'value' => 'A,B'],
+                    ['field' => 'lead.email',      'operator' => 'empty', 'value' => ''],
+                    ['field' => 'lead.whatsapp',   'operator' => 'empty', 'value' => ''],
+                ],
             ],
             'chatbot_notify_enabled'   => '0',
             'chatbot_notify_email'     => '',
             'chatbot_notify_webhook'   => '',
             'chatbot_notify_on_scores' => ['A', 'B'],
             'chatbot_notify_rules'   => [
-                ['field' => 'lead.lead_score', 'operator' => 'in', 'value' => ['A', 'B']],
+                [ // Group 1: lead_score A|B AND whatsapp not empty
+                    ['field' => 'lead.lead_score', 'operator' => 'in',       'value' => 'A,B'],
+                    ['field' => 'lead.whatsapp',   'operator' => 'not_empty', 'value' => ''],
+                ],
+                [ // Group 2: lead_score A|B AND email not empty
+                    ['field' => 'lead.lead_score', 'operator' => 'in',       'value' => 'A,B'],
+                    ['field' => 'lead.email',      'operator' => 'not_empty', 'value' => ''],
+                ],
             ],
             'chatbot_i18n'             => [
                 'title'             => 'AI Assistant',
@@ -291,6 +299,12 @@ class AI_Chatbot_CPT_Chatbot {
             }
             if (get_post_meta($post_id, 'chatbot_button_color', true) === '') {
                 $meta['chatbot_button_color'] = $saved_primary;
+            }
+        }
+        // Backward compat: migrate flat rules to grouped format
+        foreach (['chatbot_lead_capture_rules', 'chatbot_notify_rules'] as $rules_key) {
+            if (!empty($meta[$rules_key]) && is_array($meta[$rules_key]) && isset($meta[$rules_key][0]['field'])) {
+                $meta[$rules_key] = [$meta[$rules_key]];
             }
         }
         return $meta;

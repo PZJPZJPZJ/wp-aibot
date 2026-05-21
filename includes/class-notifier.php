@@ -60,6 +60,7 @@ class AI_Chatbot_Notifier {
 
     /**
      * Evaluate notification rules against parsed AI data.
+     * OR between rule groups, AND within each group.
      */
     private function should_notify(array $parsed, array $config): bool {
         $rules = $config['chatbot_notify_rules'] ?? null;
@@ -71,8 +72,20 @@ class AI_Chatbot_Notifier {
             return in_array($score, $notify_on, true);
         }
 
-        foreach ($rules as $rule) {
-            if ($this->evaluate_rule($parsed, $rule)) {
+        // Backward compat: flat format -> single group
+        if (isset($rules[0]['field'])) {
+            $rules = [$rules];
+        }
+
+        foreach ($rules as $group) {
+            $match = true;
+            foreach ($group as $condition) {
+                if (!$this->evaluate_rule($parsed, $condition)) {
+                    $match = false;
+                    break;
+                }
+            }
+            if ($match) {
                 return true;
             }
         }
@@ -94,9 +107,8 @@ class AI_Chatbot_Notifier {
 
         $actual = $this->resolve_field($data, $field);
 
-        // If the field doesn't exist in the data, rule does not match
-        if ($actual === null && $operator !== 'neq') {
-            // null only matches neq when the expected value is also null-aware
+        // If the field doesn't exist in the data, only empty/not_empty/neq can proceed
+        if ($actual === null && !in_array($operator, ['neq', 'empty', 'not_empty'], true)) {
             // For simplicity, null doesn't match any rule by default
             return false;
         }
@@ -134,6 +146,12 @@ class AI_Chatbot_Notifier {
             case 'lte':
             case '<=':
                 return is_numeric($actual) && is_numeric($expected) && (float) $actual <= (float) $expected;
+
+            case 'empty':
+                return empty($actual) && $actual !== false && $actual !== 0;
+
+            case 'not_empty':
+                return !empty($actual) || $actual === false || $actual === 0;
 
             default:
                 return false;

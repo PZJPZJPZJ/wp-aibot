@@ -8,7 +8,8 @@
 
     var config = window.aiChatbotAdmin || {};
     var schemaIdx = config.schemaIdx || 0;
-    var notifyIdx = config.notifyIdx || 0;
+    var notifyGroupIdx = config.notifyGroupIdx || 0;
+    var captureGroupIdx = config.captureGroupIdx || 0;
     $(document).ready(function() {
         // ===== Tab switching =====
         $('.ai-chatbot-tab-btn').on('click', function() {
@@ -71,32 +72,74 @@
             });
         });
 
-        // ===== Notification Rules Builder =====
+        // ===== Notification Rules Builder (grouped: OR between groups, AND within) =====
         var $notifyContainer = $('#js-notify-rules-fields');
-        var $notifyTpl = $('#js-notify-rule-tpl');
+        var $notifyGroupTpl = $('#js-notify-group-tpl');
+        var $notifyCondTpl = $('#js-notify-condition-tpl');
 
-        $('.js-notify-add-rule').on('click', function() {
-            var html = $notifyTpl.html().replace(/__RIDX__/g, notifyIdx);
-            $notifyContainer.append(html);
-            notifyIdx++;
+        // Add a new rule group
+        $('.js-notify-add-group').on('click', function() {
+            var html = $notifyGroupTpl.html().replace(/__NGIDX__/g, notifyGroupIdx);
+            var $group = $(html);
+            $notifyContainer.append($group);
+            notifyGroupIdx++;
         });
 
-        $notifyContainer.on('click', '.js-notify-remove-rule', function() {
-            $(this).closest('.js-notify-rule-row').remove();
+        // Remove a rule group
+        $notifyContainer.on('click', '.js-notify-remove-group', function() {
+            $(this).closest('.ai-chatbot-rule-group').remove();
         });
 
-        // ===== Lead Capture Rules Builder =====
+        // Add a condition to a specific group
+        $notifyContainer.on('click', '.js-notify-add-condition', function() {
+            var $group = $(this).closest('.ai-chatbot-rule-group');
+            var gidx = $group.data('group-index');
+            var $conditions = $group.find('.ai-chatbot-rule-group-conditions');
+            var cidx = $conditions.children().length;
+            var html = $notifyCondTpl.html()
+                .replace(/__NGIDX__/g, gidx)
+                .replace(/__NCIDX__/g, cidx);
+            $conditions.append(html);
+        });
+
+        // Remove a condition from a group
+        $notifyContainer.on('click', '.js-notify-remove-condition', function() {
+            $(this).closest('.ai-chatbot-condition-row').remove();
+        });
+
+        // ===== Lead Capture Rules Builder (grouped: OR between groups, AND within) =====
         var $captureContainer = $('#js-capture-rules-fields');
-        var $captureTpl = $('#js-capture-rule-tpl');
+        var $captureGroupTpl = $('#js-capture-group-tpl');
+        var $captureCondTpl = $('#js-capture-condition-tpl');
 
-        $(document).on('click', '.js-capture-add-rule', function() {
-            var html = $captureTpl.html().replace(/__CIDX__/g, config.captureIdx);
-            $captureContainer.append(html);
-            config.captureIdx++;
+        // Add a new rule group
+        $(document).on('click', '.js-capture-add-group', function() {
+            var html = $captureGroupTpl.html().replace(/__GIDX__/g, captureGroupIdx);
+            var $group = $(html);
+            $captureContainer.append($group);
+            captureGroupIdx++;
         });
 
-        $captureContainer.on('click', '.js-capture-remove-rule', function() {
-            $(this).closest('.js-capture-rule-row').remove();
+        // Remove a rule group
+        $captureContainer.on('click', '.js-capture-remove-group', function() {
+            $(this).closest('.ai-chatbot-rule-group').remove();
+        });
+
+        // Add a condition to a specific group
+        $captureContainer.on('click', '.js-capture-add-condition', function() {
+            var $group = $(this).closest('.ai-chatbot-rule-group');
+            var gidx = $group.data('group-index');
+            var $conditions = $group.find('.ai-chatbot-rule-group-conditions');
+            var cidx = $conditions.children().length;
+            var html = $captureCondTpl.html()
+                .replace(/__GIDX__/g, gidx)
+                .replace(/__CIDX__/g, cidx);
+            $conditions.append(html);
+        });
+
+        // Remove a condition from a group
+        $captureContainer.on('click', '.js-capture-remove-condition', function() {
+            $(this).closest('.ai-chatbot-condition-row').remove();
         });
 
         // ===== Font Awesome Icon Selector =====

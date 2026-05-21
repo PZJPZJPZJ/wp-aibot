@@ -164,7 +164,7 @@ class AI_Chatbot_Chat_API {
     }
 
     /**
-     * Evaluate lead capture rules (AND logic — all must match).
+     * Evaluate lead capture rules (OR between groups, AND within each group).
      */
     private static function evaluate_lead_capture(array $parsed, array $config): bool {
         if (empty($config['chatbot_lead_capture_enabled'])) {
@@ -178,13 +178,25 @@ class AI_Chatbot_Chat_API {
             return in_array($score, ['A', 'B'], true);
         }
 
-        foreach ($rules as $rule) {
-            if (!self::evaluate_lead_rule($parsed, $rule)) {
-                return false; // AND logic — first fail breaks
+        // Backward compat: flat format -> single group
+        if (isset($rules[0]['field'])) {
+            $rules = [$rules];
+        }
+
+        foreach ($rules as $group) {
+            $match = true;
+            foreach ($group as $condition) {
+                if (!self::evaluate_lead_rule($parsed, $condition)) {
+                    $match = false;
+                    break; // AND within group
+                }
+            }
+            if ($match) {
+                return true; // OR between groups
             }
         }
 
-        return true;
+        return false;
     }
 
     /**

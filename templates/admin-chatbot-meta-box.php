@@ -567,71 +567,106 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             </div>
         </div>
         <div class="ai-chatbot-field">
-            <label><?php esc_html_e('Trigger Rules (AND logic — all must match)', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define conditions that trigger the lead capture form. All rules must be satisfied for the form to appear.', 'wp-aibot'); ?></div>
+            <label><?php esc_html_e('Trigger Rules (OR between groups, AND within each group)', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define rule groups. Rules are OR\'d — any matching group triggers the form. Conditions within a group are AND\'d — all must match for that group to fire.', 'wp-aibot'); ?></div>
             <input type="hidden" name="chatbot_lead_capture_rules_sentinel" value="1" />
             <div id="js-capture-rules-fields">
                 <?php
-                $capture_rules = $meta['chatbot_lead_capture_rules'] ?? [];
-                if (is_string($capture_rules)) {
-                    $capture_rules = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_capture_rules'];
+                $capture_groups = $meta['chatbot_lead_capture_rules'] ?? [];
+                if (is_string($capture_groups)) {
+                    $capture_groups = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_capture_rules'];
                 }
-                if (empty($capture_rules)) {
-                    $capture_rules = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_capture_rules'];
+                if (empty($capture_groups)) {
+                    $capture_groups = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_lead_capture_rules'];
                 }
-                $cidx = 0;
-                foreach ($capture_rules as $rule):
-                    $rule = (array) $rule;
+                $gidx = 0;
+                foreach ($capture_groups as $group):
+                    $group = (array) $group;
                 ?>
-                <div class="js-capture-rule-row" data-index="<?php echo $cidx; ?>">
-                    <div class="js-notify-fields-row">
-                        <div class="js-notify-field-path">
-                            <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
-                            <div style="display:flex;align-items:center;">
-                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
-                                <input type="text" name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][field]" value="<?php echo esc_attr(preg_replace('/^lead\./', '', $rule['field'] ?? '')); ?>" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                <div class="ai-chatbot-rule-group" data-group-index="<?php echo $gidx; ?>">
+                    <?php if ($gidx > 0): ?>
+                    <div class="ai-chatbot-rule-group-or"><?php esc_html_e('OR', 'wp-aibot'); ?></div>
+                    <?php endif; ?>
+                    <div class="ai-chatbot-rule-group-body">
+                        <div class="ai-chatbot-rule-group-header">
+                            <strong><?php printf(esc_html__('Rule Group %d', 'wp-aibot'), $gidx + 1); ?></strong>
+                        </div>
+                        <div class="ai-chatbot-rule-group-conditions">
+                            <?php $cidx = 0; foreach ($group as $condition):
+                                $condition = (array) $condition;
+                            ?>
+                            <div class="ai-chatbot-condition-row" data-cond-index="<?php echo $cidx; ?>">
+                                <div class="js-notify-fields-row">
+                                    <div class="js-notify-field-path">
+                                        <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
+                                        <div style="display:flex;align-items:center;">
+                                            <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                            <input type="text" name="chatbot_lead_capture_rules[<?php echo $gidx; ?>][<?php echo $cidx; ?>][field]" value="<?php echo esc_attr(preg_replace('/^lead\./', '', $condition['field'] ?? '')); ?>" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                                        </div>
+                                    </div>
+                                    <div class="js-notify-field-operator">
+                                        <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
+                                        <select name="chatbot_lead_capture_rules[<?php echo $gidx; ?>][<?php echo $cidx; ?>][operator]" style="width:100%;">
+                                            <option value="eq" <?php selected($condition['operator'] ?? '', 'eq'); ?>><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
+                                            <option value="neq" <?php selected($condition['operator'] ?? '', 'neq'); ?>><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
+                                            <option value="in" <?php selected($condition['operator'] ?? '', 'in'); ?>><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
+                                            <option value="contains" <?php selected($condition['operator'] ?? '', 'contains'); ?>><?php esc_html_e('contains', 'wp-aibot'); ?></option>
+                                            <option value="gt" <?php selected($condition['operator'] ?? '', 'gt'); ?>><?php esc_html_e('greater than (>)', 'wp-aibot'); ?></option>
+                                            <option value="lt" <?php selected($condition['operator'] ?? '', 'lt'); ?>><?php esc_html_e('less than (<)', 'wp-aibot'); ?></option>
+                                            <option value="gte" <?php selected($condition['operator'] ?? '', 'gte'); ?>><?php esc_html_e('>=', 'wp-aibot'); ?></option>
+                                            <option value="lte" <?php selected($condition['operator'] ?? '', 'lte'); ?>><?php esc_html_e('<=', 'wp-aibot'); ?></option>
+                                            <option value="empty" <?php selected($condition['operator'] ?? '', 'empty'); ?>><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
+                                            <option value="not_empty" <?php selected($condition['operator'] ?? '', 'not_empty'); ?>><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
+                                        </select>
+                                    </div>
+                                    <div class="js-notify-field-value">
+                                        <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
+                                        <input type="text" name="chatbot_lead_capture_rules[<?php echo $gidx; ?>][<?php echo $cidx; ?>][value]" value="<?php echo esc_attr($condition['value'] ?? ''); ?>" style="width:100%;" />
+                                    </div>
+                                    <div class="js-notify-field-actions">
+                                        <label>&nbsp;</label>
+                                        <button type="button" class="js-capture-remove-condition button button-small" title="<?php esc_attr_e('Remove condition', 'wp-aibot'); ?>">✕</button>
+                                    </div>
+                                </div>
                             </div>
+                            <?php $cidx++; endforeach; ?>
                         </div>
-                        <div class="js-notify-field-operator">
-                            <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
-                            <select name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][operator]" style="width:100%;">
-                                <option value="eq" <?php selected($rule['operator'] ?? '', 'eq'); ?>><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
-                                <option value="neq" <?php selected($rule['operator'] ?? '', 'neq'); ?>><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
-                                <option value="in" <?php selected($rule['operator'] ?? '', 'in'); ?>><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
-                                <option value="contains" <?php selected($rule['operator'] ?? '', 'contains'); ?>><?php esc_html_e('contains', 'wp-aibot'); ?></option>
-                                <option value="gt" <?php selected($rule['operator'] ?? '', 'gt'); ?>><?php esc_html_e('greater than (>)', 'wp-aibot'); ?></option>
-                                <option value="lt" <?php selected($rule['operator'] ?? '', 'lt'); ?>><?php esc_html_e('less than (<)', 'wp-aibot'); ?></option>
-                                <option value="gte" <?php selected($rule['operator'] ?? '', 'gte'); ?>><?php esc_html_e('>=', 'wp-aibot'); ?></option>
-                                <option value="lte" <?php selected($rule['operator'] ?? '', 'lte'); ?>><?php esc_html_e('<=', 'wp-aibot'); ?></option>
-                                <option value="empty" <?php selected($rule['operator'] ?? '', 'empty'); ?>><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
-                                <option value="not_empty" <?php selected($rule['operator'] ?? '', 'not_empty'); ?>><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
-                            </select>
-                        </div>
-                        <div class="js-notify-field-value">
-                            <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_lead_capture_rules[<?php echo $cidx; ?>][value]" value="<?php echo esc_attr($rule['value'] ?? ''); ?>" style="width:100%;" />
-                        </div>
-                        <div class="js-notify-field-actions">
-                            <label>&nbsp;</label>
-                            <button type="button" class="js-capture-remove-rule button button-small" title="<?php esc_attr_e('Remove rule', 'wp-aibot'); ?>">✕</button>
+                        <div class="ai-chatbot-rule-group-actions">
+                            <button type="button" class="js-capture-add-condition button button-small">+ <?php esc_html_e('Add Condition', 'wp-aibot'); ?></button>
+                            <button type="button" class="js-capture-remove-group button button-small"><?php esc_html_e('Remove Group', 'wp-aibot'); ?></button>
                         </div>
                     </div>
                 </div>
-                <?php $cidx++; endforeach; ?>
+                <?php $gidx++; endforeach; ?>
             </div>
-            <template id="js-capture-rule-tpl">
-                <div class="js-capture-rule-row" data-index="__CIDX__">
+            <template id="js-capture-group-tpl">
+                <div class="ai-chatbot-rule-group" data-group-index="__GIDX__">
+                    <div class="ai-chatbot-rule-group-or"><?php esc_html_e('OR', 'wp-aibot'); ?></div>
+                    <div class="ai-chatbot-rule-group-body">
+                        <div class="ai-chatbot-rule-group-header">
+                            <strong><?php esc_html_e('New Rule Group', 'wp-aibot'); ?></strong>
+                        </div>
+                        <div class="ai-chatbot-rule-group-conditions"></div>
+                        <div class="ai-chatbot-rule-group-actions">
+                            <button type="button" class="js-capture-add-condition button button-small">+ <?php esc_html_e('Add Condition', 'wp-aibot'); ?></button>
+                            <button type="button" class="js-capture-remove-group button button-small"><?php esc_html_e('Remove Group', 'wp-aibot'); ?></button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template id="js-capture-condition-tpl">
+                <div class="ai-chatbot-condition-row" data-cond-index="__CIDX__">
                     <div class="js-notify-fields-row">
                         <div class="js-notify-field-path">
                             <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
                             <div style="display:flex;align-items:center;">
                                 <code style="margin-right:4px;flex-shrink:0;">lead.</code>
-                                <input type="text" name="chatbot_lead_capture_rules[__CIDX__][field]" value="" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                                <input type="text" name="chatbot_lead_capture_rules[__GIDX__][__CIDX__][field]" value="" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
                             </div>
                         </div>
                         <div class="js-notify-field-operator">
                             <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
-                            <select name="chatbot_lead_capture_rules[__CIDX__][operator]" style="width:100%;">
+                            <select name="chatbot_lead_capture_rules[__GIDX__][__CIDX__][operator]" style="width:100%;">
                                 <option value="eq"><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
                                 <option value="neq"><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
                                 <option value="in"><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
@@ -646,17 +681,17 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                         </div>
                         <div class="js-notify-field-value">
                             <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_lead_capture_rules[__CIDX__][value]" value="" style="width:100%;" />
+                            <input type="text" name="chatbot_lead_capture_rules[__GIDX__][__CIDX__][value]" value="" style="width:100%;" />
                         </div>
                         <div class="js-notify-field-actions">
                             <label>&nbsp;</label>
-                            <button type="button" class="js-capture-remove-rule button button-small" title="<?php esc_attr_e('Remove rule', 'wp-aibot'); ?>">✕</button>
+                            <button type="button" class="js-capture-remove-condition button button-small" title="<?php esc_attr_e('Remove condition', 'wp-aibot'); ?>">✕</button>
                         </div>
                     </div>
                 </div>
             </template>
             <div style="margin-top:8px;">
-                <button type="button" class="js-capture-add-rule button">+ <?php esc_html_e('Add Rule', 'wp-aibot'); ?></button>
+                <button type="button" class="js-capture-add-group button">+ <?php esc_html_e('Add Rule Group', 'wp-aibot'); ?></button>
             </div>
         </div>
     </div>
@@ -695,88 +730,131 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             </div>
         </div>
         <div class="ai-chatbot-field">
-            <label><?php esc_html_e('Notification Rules', 'wp-aibot'); ?></label>
-            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('When a JSON field matches a rule, notifications are sent to the email/webhook above. Multiple rules: any match triggers the notification.', 'wp-aibot'); ?></div>
+            <label><?php esc_html_e('Notification Rules (OR between groups, AND within each group)', 'wp-aibot'); ?></label>
+            <div class="description" style="margin-bottom:8px;"><?php esc_html_e('Define rule groups. Any matching group triggers the notification. Conditions within a group all must match.', 'wp-aibot'); ?></div>
             <input type="hidden" name="chatbot_notify_rules_sentinel" value="1" />
             <div id="js-notify-rules-fields">
                 <?php
-                $notify_rules = $meta['chatbot_notify_rules'] ?? [];
-                if (is_string($notify_rules)) {
-                    $notify_rules = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_notify_rules'];
+                $notify_groups = $meta['chatbot_notify_rules'] ?? [];
+                if (is_string($notify_groups)) {
+                    $notify_groups = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_notify_rules'];
                 }
-                if (empty($notify_rules)) {
-                    $notify_rules = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_notify_rules'];
+                if (empty($notify_groups)) {
+                    $notify_groups = AI_Chatbot_CPT_Chatbot::get_defaults()['chatbot_notify_rules'];
                 }
-                $ridx = 0;
-                foreach ($notify_rules as $rule):
-                    $rule = (array) $rule;
+                $ngidx = 0;
+                foreach ($notify_groups as $group):
+                    $group = (array) $group;
                 ?>
-                <div class="js-notify-rule-row" data-index="<?php echo $ridx; ?>">
-                    <div class="js-notify-fields-row">
-                        <div class="js-notify-field-path">
-                            <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
-                            <div style="display:flex;align-items:center;">
-                                <code style="margin-right:4px;flex-shrink:0;">lead.</code>
-                                <input type="text" name="chatbot_notify_rules[<?php echo $ridx; ?>][field]" value="<?php echo esc_attr(preg_replace('/^lead\./', '', $rule['field'] ?? '')); ?>" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                <div class="ai-chatbot-rule-group" data-group-index="<?php echo $ngidx; ?>">
+                    <?php if ($ngidx > 0): ?>
+                    <div class="ai-chatbot-rule-group-or"><?php esc_html_e('OR', 'wp-aibot'); ?></div>
+                    <?php endif; ?>
+                    <div class="ai-chatbot-rule-group-body">
+                        <div class="ai-chatbot-rule-group-header">
+                            <strong><?php printf(esc_html__('Rule Group %d', 'wp-aibot'), $ngidx + 1); ?></strong>
+                        </div>
+                        <div class="ai-chatbot-rule-group-conditions">
+                            <?php $ncidx = 0; foreach ($group as $condition):
+                                $condition = (array) $condition;
+                            ?>
+                            <div class="ai-chatbot-condition-row" data-cond-index="<?php echo $ncidx; ?>">
+                                <div class="js-notify-fields-row">
+                                    <div class="js-notify-field-path">
+                                        <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
+                                        <div style="display:flex;align-items:center;">
+                                            <code style="margin-right:4px;flex-shrink:0;">lead.</code>
+                                            <input type="text" name="chatbot_notify_rules[<?php echo $ngidx; ?>][<?php echo $ncidx; ?>][field]" value="<?php echo esc_attr(preg_replace('/^lead\./', '', $condition['field'] ?? '')); ?>" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                                        </div>
+                                    </div>
+                                    <div class="js-notify-field-operator">
+                                        <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
+                                        <select name="chatbot_notify_rules[<?php echo $ngidx; ?>][<?php echo $ncidx; ?>][operator]" style="width:100%;">
+                                            <option value="eq" <?php selected($condition['operator'] ?? '', 'eq'); ?>><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
+                                            <option value="neq" <?php selected($condition['operator'] ?? '', 'neq'); ?>><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
+                                            <option value="in" <?php selected($condition['operator'] ?? '', 'in'); ?>><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
+                                            <option value="contains" <?php selected($condition['operator'] ?? '', 'contains'); ?>><?php esc_html_e('contains', 'wp-aibot'); ?></option>
+                                            <option value="gt" <?php selected($condition['operator'] ?? '', 'gt'); ?>><?php esc_html_e('greater than (>)', 'wp-aibot'); ?></option>
+                                            <option value="lt" <?php selected($condition['operator'] ?? '', 'lt'); ?>><?php esc_html_e('less than (<)', 'wp-aibot'); ?></option>
+                                            <option value="gte" <?php selected($condition['operator'] ?? '', 'gte'); ?>><?php esc_html_e('>=', 'wp-aibot'); ?></option>
+                                            <option value="lte" <?php selected($condition['operator'] ?? '', 'lte'); ?>><?php esc_html_e('<=', 'wp-aibot'); ?></option>
+                                            <option value="empty" <?php selected($condition['operator'] ?? '', 'empty'); ?>><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
+                                            <option value="not_empty" <?php selected($condition['operator'] ?? '', 'not_empty'); ?>><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
+                                        </select>
+                                    </div>
+                                    <div class="js-notify-field-value">
+                                        <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
+                                        <input type="text" name="chatbot_notify_rules[<?php echo $ngidx; ?>][<?php echo $ncidx; ?>][value]" value="<?php echo esc_attr(is_array($condition['value'] ?? '') ? implode(',', $condition['value']) : ($condition['value'] ?? '')); ?>" style="width:100%;" />
+                                    </div>
+                                    <div class="js-notify-field-actions">
+                                        <label>&nbsp;</label>
+                                        <button type="button" class="js-notify-remove-condition button button-small" title="<?php esc_attr_e('Remove condition', 'wp-aibot'); ?>">✕</button>
+                                    </div>
+                                </div>
                             </div>
+                            <?php $ncidx++; endforeach; ?>
                         </div>
-                        <div class="js-notify-field-operator">
-                            <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
-                            <select name="chatbot_notify_rules[<?php echo $ridx; ?>][operator]" style="width:100%;">
-                                <option value="eq" <?php selected($rule['operator'] ?? '', 'eq'); ?>><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
-                                <option value="neq" <?php selected($rule['operator'] ?? '', 'neq'); ?>><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
-                                <option value="in" <?php selected($rule['operator'] ?? '', 'in'); ?>><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
-                                <option value="contains" <?php selected($rule['operator'] ?? '', 'contains'); ?>><?php esc_html_e('contains', 'wp-aibot'); ?></option>
-                                <option value="gt" <?php selected($rule['operator'] ?? '', 'gt'); ?>><?php esc_html_e('greater than (>)', 'wp-aibot'); ?></option>
-                                <option value="lt" <?php selected($rule['operator'] ?? '', 'lt'); ?>><?php esc_html_e('less than (<)', 'wp-aibot'); ?></option>
-                            </select>
-                        </div>
-                        <div class="js-notify-field-value">
-                            <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_notify_rules[<?php echo $ridx; ?>][value]" value="<?php echo esc_attr(is_array($rule['value'] ?? '') ? implode(',', $rule['value']) : ($rule['value'] ?? '')); ?>" placeholder="A,B" style="width:100%;" />
-                        </div>
-                        <div class="js-notify-field-actions">
-                            <label>&nbsp;</label>
-                            <button type="button" class="js-notify-remove-rule button button-small" title="<?php esc_attr_e('Remove rule', 'wp-aibot'); ?>">✕</button>
+                        <div class="ai-chatbot-rule-group-actions">
+                            <button type="button" class="js-notify-add-condition button button-small">+ <?php esc_html_e('Add Condition', 'wp-aibot'); ?></button>
+                            <button type="button" class="js-notify-remove-group button button-small"><?php esc_html_e('Remove Group', 'wp-aibot'); ?></button>
                         </div>
                     </div>
                 </div>
-                <?php $ridx++; endforeach; ?>
+                <?php $ngidx++; endforeach; ?>
             </div>
-            <template id="js-notify-rule-tpl">
-                <div class="js-notify-rule-row" data-index="__RIDX__">
+            <template id="js-notify-group-tpl">
+                <div class="ai-chatbot-rule-group" data-group-index="__NGIDX__">
+                    <div class="ai-chatbot-rule-group-or"><?php esc_html_e('OR', 'wp-aibot'); ?></div>
+                    <div class="ai-chatbot-rule-group-body">
+                        <div class="ai-chatbot-rule-group-header">
+                            <strong><?php esc_html_e('New Rule Group', 'wp-aibot'); ?></strong>
+                        </div>
+                        <div class="ai-chatbot-rule-group-conditions"></div>
+                        <div class="ai-chatbot-rule-group-actions">
+                            <button type="button" class="js-notify-add-condition button button-small">+ <?php esc_html_e('Add Condition', 'wp-aibot'); ?></button>
+                            <button type="button" class="js-notify-remove-group button button-small"><?php esc_html_e('Remove Group', 'wp-aibot'); ?></button>
+                        </div>
+                    </div>
+                </div>
+            </template>
+            <template id="js-notify-condition-tpl">
+                <div class="ai-chatbot-condition-row" data-cond-index="__NCIDX__">
                     <div class="js-notify-fields-row">
                         <div class="js-notify-field-path">
                             <label><?php esc_html_e('Field', 'wp-aibot'); ?></label>
                             <div style="display:flex;align-items:center;">
                                 <code style="margin-right:4px;flex-shrink:0;">lead.</code>
-                                <input type="text" name="chatbot_notify_rules[__RIDX__][field]" value="" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
+                                <input type="text" name="chatbot_notify_rules[__NGIDX__][__NCIDX__][field]" value="" placeholder="e.g. lead_score" style="flex:1;min-width:0;" />
                             </div>
                         </div>
                         <div class="js-notify-field-operator">
                             <label><?php esc_html_e('Operator', 'wp-aibot'); ?></label>
-                            <select name="chatbot_notify_rules[__RIDX__][operator]" style="width:100%;">
+                            <select name="chatbot_notify_rules[__NGIDX__][__NCIDX__][operator]" style="width:100%;">
                                 <option value="eq"><?php esc_html_e('equals (=)', 'wp-aibot'); ?></option>
                                 <option value="neq"><?php esc_html_e('not equals (!=)', 'wp-aibot'); ?></option>
                                 <option value="in"><?php esc_html_e('in (comma-separated)', 'wp-aibot'); ?></option>
                                 <option value="contains"><?php esc_html_e('contains', 'wp-aibot'); ?></option>
                                 <option value="gt"><?php esc_html_e('greater than (>)', 'wp-aibot'); ?></option>
                                 <option value="lt"><?php esc_html_e('less than (<)', 'wp-aibot'); ?></option>
+                                <option value="gte"><?php esc_html_e('>=', 'wp-aibot'); ?></option>
+                                <option value="lte"><?php esc_html_e('<=', 'wp-aibot'); ?></option>
+                                <option value="empty"><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
+                                <option value="not_empty"><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
                             </select>
                         </div>
                         <div class="js-notify-field-value">
                             <label><?php esc_html_e('Value', 'wp-aibot'); ?></label>
-                            <input type="text" name="chatbot_notify_rules[__RIDX__][value]" value="" placeholder="A,B" style="width:100%;" />
+                            <input type="text" name="chatbot_notify_rules[__NGIDX__][__NCIDX__][value]" value="" style="width:100%;" />
                         </div>
                         <div class="js-notify-field-actions">
                             <label>&nbsp;</label>
-                            <button type="button" class="js-notify-remove-rule button button-small" title="<?php esc_attr_e('Remove rule', 'wp-aibot'); ?>">✕</button>
+                            <button type="button" class="js-notify-remove-condition button button-small" title="<?php esc_attr_e('Remove condition', 'wp-aibot'); ?>">✕</button>
                         </div>
                     </div>
                 </div>
             </template>
             <div style="margin-top:8px;">
-                <button type="button" class="js-notify-add-rule button">+ <?php esc_html_e('Add Rule', 'wp-aibot'); ?></button>
+                <button type="button" class="js-notify-add-group button">+ <?php esc_html_e('Add Rule Group', 'wp-aibot'); ?></button>
             </div>
         </div>
     </div>
@@ -785,8 +863,8 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
 <script>
 window.aiChatbotAdmin = window.aiChatbotAdmin || {};
 window.aiChatbotAdmin.schemaIdx = <?php echo max($idx, 0); ?>;
-window.aiChatbotAdmin.notifyIdx = <?php echo max($ridx ?? 0, 0); ?>;
-window.aiChatbotAdmin.captureIdx = <?php echo max($cidx ?? 0, 0); ?>;
+window.aiChatbotAdmin.notifyGroupIdx = <?php echo max($ngidx ?? 0, 0); ?>;
+window.aiChatbotAdmin.captureGroupIdx = <?php echo max($gidx ?? 0, 0); ?>;
 window.aiChatbotAdmin.leadFieldsIdx = <?php echo max($lidx ?? 0, 0); ?>;
 document.getElementById('js-wecom-guide-toggle')?.addEventListener('click', function(e) {
     e.preventDefault();
