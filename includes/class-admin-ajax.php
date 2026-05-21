@@ -11,6 +11,10 @@ class AI_Chatbot_Admin_Ajax {
             wp_die(-1);
         }
 
+        if (!check_ajax_referer('ai_chatbot_preview', 'nonce', false)) {
+            wp_send_json_error(['message' => 'Security check failed.']);
+        }
+
         $chatbot_id = (int) ($_POST['chatbot_id'] ?? 0);
         if (!$chatbot_id || get_post_type($chatbot_id) !== 'ai_chatbot') {
             wp_send_json_error(['message' => 'Invalid chatbot.']);

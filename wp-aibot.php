@@ -24,6 +24,10 @@ add_action('plugins_loaded', function () {
     if (!defined('AI_CHAT_SESSION_SECRET')) {
         define('AI_CHAT_SESSION_SECRET', wp_salt('auth'));
     }
+    // Encryption key for stored API keys — separate from session HMAC secret
+    if (!defined('AI_CHAT_ENCRYPT_KEY')) {
+        define('AI_CHAT_ENCRYPT_KEY', wp_salt('secure_auth'));
+    }
 }, 1);
 
 // Autoload includes

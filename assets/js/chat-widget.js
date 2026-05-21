@@ -284,10 +284,7 @@
                 const data = await res.json();
                 this.hideTyping();
 
-                console.log('AI Chatbot response:', data);
-
                 if (data.ok) {
-                    console.log('Reply text:', data.data && data.data.reply);
                     // Persist session token + session_id for visitor-based sessions
                     if (data.data && data.data.session_token) {
                         this.sessionToken = data.data.session_token;

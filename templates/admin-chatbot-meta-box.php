@@ -201,50 +201,6 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             </div>
         </div>
 
-        <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var rippleToggle = document.querySelector('[name="chatbot_fab_ripple_enabled"]');
-            var rippleSettings = document.getElementById('ai-chatbot-ripple-settings');
-            function toggleRippleSettings() {
-                rippleSettings.style.display = rippleToggle && rippleToggle.checked ? 'flex' : 'none';
-            }
-            if (rippleToggle && rippleSettings) {
-                rippleToggle.addEventListener('change', toggleRippleSettings);
-                toggleRippleSettings();
-            }
-            var opacityRange = document.getElementById('chatbot_fab_ripple_opacity');
-            var opacityVal = document.getElementById('ai-chatbot-ripple-opacity-val');
-            if (opacityRange && opacityVal) {
-                opacityRange.addEventListener('input', function() { opacityVal.textContent = this.value; });
-            }
-            var speedRange = document.getElementById('chatbot_fab_ripple_speed');
-            var speedVal = document.getElementById('ai-chatbot-ripple-speed-val');
-            if (speedRange && speedVal) {
-                speedRange.addEventListener('input', function() { speedVal.textContent = this.value + 's'; });
-            }
-            var radiusRange = document.getElementById('chatbot_fab_ripple_radius');
-            var radiusVal = document.getElementById('ai-chatbot-ripple-radius-val');
-            if (radiusRange && radiusVal) {
-                radiusRange.addEventListener('input', function() { radiusVal.textContent = this.value + 'x'; });
-            }
-            var tempRange = document.getElementById('chatbot_temperature');
-            var tempVal = document.getElementById('ai-chatbot-temp-val');
-            if (tempRange && tempVal) {
-                tempRange.addEventListener('input', function() { tempVal.textContent = this.value; });
-            }
-            // Cache TTL toggle
-            var defaultOpenToggle = document.querySelector('[name="chatbot_fab_default_open"]');
-            var cacheTtlField = document.getElementById('ai-chatbot-cache-ttl-field');
-            function toggleCacheTtl() {
-                cacheTtlField.style.display = defaultOpenToggle && defaultOpenToggle.checked ? 'block' : 'none';
-            }
-            if (defaultOpenToggle && cacheTtlField) {
-                defaultOpenToggle.addEventListener('change', toggleCacheTtl);
-                toggleCacheTtl();
-            }
-        });
-        </script>
-
         <hr style="margin:20px 0;border:none;border-top:1px solid #ddd;">
         <div class="ai-chatbot-field-row">
             <div class="ai-chatbot-field">
@@ -859,20 +815,3 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         </div>
     </div>
 </div>
-
-<script>
-window.aiChatbotAdmin = window.aiChatbotAdmin || {};
-window.aiChatbotAdmin.schemaIdx = <?php echo max($idx, 0); ?>;
-window.aiChatbotAdmin.notifyGroupIdx = <?php echo max($ngidx ?? 0, 0); ?>;
-window.aiChatbotAdmin.captureGroupIdx = <?php echo max($gidx ?? 0, 0); ?>;
-window.aiChatbotAdmin.leadFieldsIdx = <?php echo max($lidx ?? 0, 0); ?>;
-document.getElementById('js-wecom-guide-toggle')?.addEventListener('click', function(e) {
-    e.preventDefault();
-    var guide = document.getElementById('js-wecom-guide');
-    if (guide) {
-        var isHidden = guide.style.display === 'none';
-        guide.style.display = isHidden ? '' : 'none';
-        this.textContent = isHidden ? '<?php echo esc_js(__('收起指南', 'wp-aibot')); ?>' : '<?php echo esc_js(__('如何获取 Webhook？', 'wp-aibot')); ?>';
-    }
-});
-</script>

@@ -263,6 +263,14 @@ class AI_Chatbot_Plugin {
                 AI_CHATBOT_VERSION,
                 true
             );
+
+            wp_localize_script('ai-chatbot-admin', 'aiChatbotAdmin', [
+                'preview_nonce' => wp_create_nonce('ai_chatbot_preview'),
+                'i18n' => [
+                    'hideGuide' => __('收起指南', 'wp-aibot'),
+                    'showGuide' => __('如何获取 Webhook？', 'wp-aibot'),
+                ],
+            ]);
         }
     }
 

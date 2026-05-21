@@ -312,7 +312,7 @@ class AI_Chatbot_CPT_Chatbot {
 
     private static function encrypt(string $value): string {
         if (!function_exists('openssl_encrypt')) return $value;
-        $key = defined('AI_CHAT_SESSION_SECRET') ? AI_CHAT_SESSION_SECRET : wp_salt('auth');
+        $key = defined('AI_CHAT_ENCRYPT_KEY') ? AI_CHAT_ENCRYPT_KEY : wp_salt('secure_auth');
         $cipher = 'aes-256-cbc';
         $iv_len = openssl_cipher_iv_length($cipher);
         $iv = openssl_random_pseudo_bytes($iv_len);
@@ -322,14 +322,26 @@ class AI_Chatbot_CPT_Chatbot {
 
     private static function decrypt(string $value): string {
         if (!function_exists('openssl_decrypt')) return $value;
-        $key = defined('AI_CHAT_SESSION_SECRET') ? AI_CHAT_SESSION_SECRET : wp_salt('auth');
         $cipher = 'aes-256-cbc';
         $iv_len = openssl_cipher_iv_length($cipher);
         $data = base64_decode($value);
         if ($data === false || strlen($data) <= $iv_len) return $value;
         $iv = substr($data, 0, $iv_len);
         $encrypted = substr($data, $iv_len);
-        return openssl_decrypt($encrypted, $cipher, $key, 0, $iv) ?: $value;
+
+        // Try current encrypt key first
+        $key = defined('AI_CHAT_ENCRYPT_KEY') ? AI_CHAT_ENCRYPT_KEY : wp_salt('secure_auth');
+        $result = openssl_decrypt($encrypted, $cipher, $key, 0, $iv);
+        if ($result !== false) return $result;
+
+        // Fallback: try legacy session secret for backward compatibility
+        $legacy = defined('AI_CHAT_SESSION_SECRET') ? AI_CHAT_SESSION_SECRET : wp_salt('auth');
+        if ($legacy !== $key) {
+            $result = openssl_decrypt($encrypted, $cipher, $legacy, 0, $iv);
+            if ($result !== false) return $result;
+        }
+
+        return $value;
     }
 
     private static function default_system_prompt(): string {

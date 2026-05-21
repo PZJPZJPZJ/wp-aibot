@@ -7,9 +7,9 @@
     'use strict';
 
     var config = window.aiChatbotAdmin || {};
-    var schemaIdx = config.schemaIdx || 0;
-    var notifyGroupIdx = config.notifyGroupIdx || 0;
-    var captureGroupIdx = config.captureGroupIdx || 0;
+    var schemaIdx = $('#js-schema-fields .js-schema-row').length;
+    var notifyGroupIdx = $('#js-notify-rules-fields .ai-chatbot-rule-group').length;
+    var captureGroupIdx = $('#js-capture-rules-fields .ai-chatbot-rule-group').length;
     $(document).ready(function() {
         // ===== Tab switching =====
         $('.ai-chatbot-tab-btn').on('click', function() {
@@ -177,13 +177,62 @@
         var $leadFieldsTpl = $('#js-lead-field-tpl');
 
         $(document).on('click', '.js-lead-field-add', function() {
-            var html = $leadFieldsTpl.html().replace(/__LIDX__/g, config.leadFieldsIdx);
+            var lidx = $leadFieldsContainer.children().length;
+            var html = $leadFieldsTpl.html().replace(/__LIDX__/g, lidx);
             $leadFieldsContainer.append(html);
-            config.leadFieldsIdx++;
         });
 
         $leadFieldsContainer.on('click', '.js-lead-field-remove', function() {
             $(this).closest('.js-lead-field-row').remove();
         });
+
+        // ===== Ripple settings toggle =====
+        var rippleToggle = document.querySelector('[name="chatbot_fab_ripple_enabled"]');
+        var rippleSettings = document.getElementById('ai-chatbot-ripple-settings');
+        function toggleRippleSettings() {
+            rippleSettings.style.display = rippleToggle && rippleToggle.checked ? 'flex' : 'none';
+        }
+        if (rippleToggle && rippleSettings) {
+            rippleToggle.addEventListener('change', toggleRippleSettings);
+            toggleRippleSettings();
+        }
+
+        // ===== Range slider live values =====
+        function bindRangeSlider(inputId, displayId, formatter) {
+            var input = document.getElementById(inputId);
+            var display = document.getElementById(displayId);
+            if (input && display) {
+                input.addEventListener('input', function() {
+                    display.textContent = formatter ? formatter(this.value) : this.value;
+                });
+            }
+        }
+        bindRangeSlider('chatbot_fab_ripple_opacity', 'ai-chatbot-ripple-opacity-val');
+        bindRangeSlider('chatbot_fab_ripple_speed', 'ai-chatbot-ripple-speed-val', function(v) { return v + 's'; });
+        bindRangeSlider('chatbot_fab_ripple_radius', 'ai-chatbot-ripple-radius-val', function(v) { return v + 'x'; });
+        bindRangeSlider('chatbot_temperature', 'ai-chatbot-temp-val');
+
+        // ===== Cache TTL toggle =====
+        var defaultOpenToggle = document.querySelector('[name="chatbot_fab_default_open"]');
+        var cacheTtlField = document.getElementById('ai-chatbot-cache-ttl-field');
+        function toggleCacheTtl() {
+            cacheTtlField.style.display = defaultOpenToggle && defaultOpenToggle.checked ? 'block' : 'none';
+        }
+        if (defaultOpenToggle && cacheTtlField) {
+            defaultOpenToggle.addEventListener('change', toggleCacheTtl);
+            toggleCacheTtl();
+        }
+
+        // ===== WeCom guide toggle =====
+        var guideToggle = document.getElementById('js-wecom-guide-toggle');
+        var guide = document.getElementById('js-wecom-guide');
+        if (guideToggle && guide) {
+            guideToggle.addEventListener('click', function(e) {
+                e.preventDefault();
+                var isHidden = guide.style.display === 'none';
+                guide.style.display = isHidden ? '' : 'none';
+                guideToggle.textContent = isHidden ? config.i18n.hideGuide : config.i18n.showGuide;
+            });
+        }
     });
 })(jQuery);
