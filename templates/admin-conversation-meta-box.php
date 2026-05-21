@@ -7,7 +7,7 @@ defined('ABSPATH') || exit;
  * @var WP_Post $post
  * @var string  $session_id
  * @var int     $chatbot_id
- * @var string  $history
+ * @var array   $messages
  * @var int     $msg_count
  * @var string  $started_at
  * @var mixed   $lead_data
@@ -52,39 +52,9 @@ defined('ABSPATH') || exit;
     <div class="ai-conv-section">
         <h3><?php esc_html_e('Messages', 'wp-aibot'); ?></h3>
         <?php
-        if (empty($history)) {
+        if (empty($messages)) {
             echo '<p style="color:#999;">' . esc_html__('No messages recorded.', 'wp-aibot') . '</p>';
         } else {
-            // Parse multi-line messages: accumulate content until next marker
-            $lines = explode("\n", $history);
-            $messages = [];
-            $current_role = null;
-            $current_content = [];
-
-            foreach ($lines as $line) {
-                $line = rtrim($line);
-                if (preg_match('/^\*\*(User|Assistant):\*\*\s*(.*)$/', $line, $m)) {
-                    // Save previous message
-                    if ($current_role !== null) {
-                        $messages[] = [
-                            'role'    => $current_role,
-                            'content' => implode("\n", $current_content),
-                        ];
-                    }
-                    $current_role = strtolower($m[1]);
-                    $current_content = [trim($m[2])];
-                } elseif ($current_role !== null) {
-                    $current_content[] = $line;
-                }
-            }
-            // Save last message
-            if ($current_role !== null) {
-                $messages[] = [
-                    'role'    => $current_role,
-                    'content' => implode("\n", $current_content),
-                ];
-            }
-
             echo '<div class="ai-conv-messages-scroll" style="max-height:420px;overflow-y:auto;">';
             echo '<table class="ai-conv-msg-table widefat">';
             foreach ($messages as $msg) {

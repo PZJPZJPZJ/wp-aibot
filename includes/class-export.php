@@ -28,7 +28,13 @@ class AI_Chatbot_Export {
             wp_die('Conversation not found.');
         }
 
-        $history = get_post_meta($conversation_id, 'conversation_history', true);
+        $exchanges = get_post_meta($conversation_id, 'conversation_exchange');
+        $history = '';
+        if (!empty($exchanges)) {
+            foreach ($exchanges as $ex) {
+                $history .= "\n**User:** {$ex['user']}\n**Assistant:** {$ex['assistant']}";
+            }
+        }
         $lead = get_post_meta($conversation_id, 'conversation_lead_data', true);
 
         switch ($format) {

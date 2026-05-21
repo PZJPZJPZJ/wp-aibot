@@ -3,6 +3,8 @@ defined('ABSPATH') || exit;
 
 class AI_Chatbot_Memory_Manager {
 
+    private const MAX_EXCHANGES = 500;
+
     /**
      * Load conversation history as an array of messages for AI context.
      */
@@ -11,45 +13,22 @@ class AI_Chatbot_Memory_Manager {
             return [];
         }
 
-        $history = get_post_meta($conversation_id, 'conversation_history', true);
-        if (empty($history)) {
+        $exchanges = get_post_meta($conversation_id, 'conversation_exchange');
+        if (empty($exchanges)) {
             return [];
         }
 
-        $lines = explode("\n", $history);
         $messages = [];
-        $current_role = null;
-        $current_content = [];
-
-        // Parse multi-line messages: accumulate content until next marker
-        foreach ($lines as $line) {
-            $line = rtrim($line);
-            if (preg_match('/^\*\*(User|Assistant):\*\*\s*(.*)$/', $line, $m)) {
-                // Save previous message
-                if ($current_role !== null) {
-                    $messages[] = [
-                        'role'    => $current_role,
-                        'content' => implode("\n", $current_content),
-                    ];
-                }
-                $current_role = strtolower($m[1]);
-                $current_content = [trim($m[2])];
-            } elseif ($current_role !== null) {
-                $current_content[] = $line;
-            }
-        }
-        // Save last message
-        if ($current_role !== null) {
-            $messages[] = [
-                'role'    => $current_role,
-                'content' => implode("\n", $current_content),
-            ];
+        foreach ($exchanges as $ex) {
+            $messages[] = ['role' => 'user', 'content' => $ex['user']];
+            $messages[] = ['role' => 'assistant', 'content' => $ex['assistant']];
         }
 
         // Keep only the last N complete rounds (user + assistant pairs)
         $total = count($messages);
-        if ($total > $max_history * 2) {
-            $messages = array_slice($messages, $total - $max_history * 2);
+        $keep = $max_history * 2;
+        if ($total > $keep) {
+            $messages = array_slice($messages, $total - $keep);
         }
 
         return $messages;
@@ -63,18 +42,53 @@ class AI_Chatbot_Memory_Manager {
             return;
         }
 
-        // Prevent history injection by stripping delimiter markers from messages
-        $clean_user = preg_replace('/^\*\*(User|Assistant):\*\*/m', '', $user_message);
-        $clean_reply = preg_replace('/^\*\*(User|Assistant):\*\*/m', '', $assistant_reply);
-
-        $history = get_post_meta($conversation_id, 'conversation_history', true);
-        $entry = "\n**User:** {$clean_user}\n**Assistant:** {$clean_reply}";
-        $history .= $entry;
-
-        update_post_meta($conversation_id, 'conversation_history', $history);
+        add_post_meta($conversation_id, 'conversation_exchange', [
+            'user'      => $user_message,
+            'assistant' => $assistant_reply,
+        ]);
 
         // Update message count
         $count = (int) get_post_meta($conversation_id, 'conversation_message_count', true);
         update_post_meta($conversation_id, 'conversation_message_count', $count + 1);
+
+        if ($count > self::MAX_EXCHANGES) {
+            $this->maybe_cull_exchanges($conversation_id);
+        }
+    }
+
+    /**
+     * Remove oldest exchanges when count exceeds MAX_EXCHANGES.
+     */
+    private function maybe_cull_exchanges(int $conversation_id): void {
+        global $wpdb;
+
+        $existing = (int) $wpdb->get_var($wpdb->prepare(
+            "SELECT COUNT(*) FROM {$wpdb->postmeta}
+             WHERE post_id = %d AND meta_key = 'conversation_exchange'",
+            $conversation_id
+        ));
+
+        if ($existing <= self::MAX_EXCHANGES) {
+            return;
+        }
+
+        // Keep the most recent 100 exchanges, delete the rest
+        $keep = 100;
+        $ids = $wpdb->get_col($wpdb->prepare(
+            "SELECT meta_id FROM {$wpdb->postmeta}
+             WHERE post_id = %d AND meta_key = 'conversation_exchange'
+             ORDER BY meta_id ASC
+             LIMIT %d",
+            $conversation_id,
+            $existing - $keep
+        ));
+
+        if (!empty($ids)) {
+            $placeholders = implode(',', array_fill(0, count($ids), '%d'));
+            $wpdb->query($wpdb->prepare(
+                "DELETE FROM {$wpdb->postmeta} WHERE meta_id IN ({$placeholders})",
+                $ids
+            ));
+        }
     }
 }

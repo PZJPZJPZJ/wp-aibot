@@ -49,7 +49,6 @@ class AI_Chatbot_CPT_Conversation {
     public static function render_meta_box($post): void {
         $session_id   = get_post_meta($post->ID, 'conversation_session_id', true);
         $chatbot_id   = (int) get_post_meta($post->ID, 'conversation_chatbot_id', true);
-        $history      = get_post_meta($post->ID, 'conversation_history', true);
         $msg_count    = (int) get_post_meta($post->ID, 'conversation_message_count', true);
         $started_at   = get_post_meta($post->ID, 'conversation_started_at', true);
         $lead_data    = get_post_meta($post->ID, 'conversation_lead_data', true);
@@ -60,6 +59,16 @@ class AI_Chatbot_CPT_Conversation {
 
         $bot      = $chatbot_id ? get_post($chatbot_id) : null;
         $bot_name = $bot ? $bot->post_title : '—';
+
+        // Build messages array from exchanges
+        $messages = [];
+        $exchanges = get_post_meta($post->ID, 'conversation_exchange');
+        if (!empty($exchanges)) {
+            foreach ($exchanges as $ex) {
+                $messages[] = ['role' => 'user', 'content' => $ex['user']];
+                $messages[] = ['role' => 'assistant', 'content' => $ex['assistant']];
+            }
+        }
 
         include AI_CHATBOT_PATH . 'templates/admin-conversation-meta-box.php';
     }
@@ -77,7 +86,6 @@ class AI_Chatbot_CPT_Conversation {
             'meta_input'  => [
                 'conversation_session_id'    => $session_id,
                 'conversation_chatbot_id'    => $chatbot_id,
-                'conversation_history'       => '',
                 'conversation_visitor_ip'    => $visitor_data['ip'] ?? '',
                 'conversation_visitor_ua'    => $visitor_data['ua'] ?? '',
                 'conversation_visitor_page_url'  => $visitor_data['page_url'] ?? '',
