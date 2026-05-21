@@ -63,8 +63,12 @@ class AI_Chatbot_Memory_Manager {
             return;
         }
 
+        // Prevent history injection by stripping delimiter markers from messages
+        $clean_user = preg_replace('/^\*\*(User|Assistant):\*\*/m', '', $user_message);
+        $clean_reply = preg_replace('/^\*\*(User|Assistant):\*\*/m', '', $assistant_reply);
+
         $history = get_post_meta($conversation_id, 'conversation_history', true);
-        $entry = "\n**User:** {$user_message}\n**Assistant:** {$assistant_reply}";
+        $entry = "\n**User:** {$clean_user}\n**Assistant:** {$clean_reply}";
         $history .= $entry;
 
         update_post_meta($conversation_id, 'conversation_history', $history);

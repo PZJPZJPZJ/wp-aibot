@@ -12,6 +12,10 @@ class AI_Chatbot_Export {
             wp_die('Permission denied.');
         }
 
+        if (!isset($_GET['_wpnonce']) || !wp_verify_nonce($_GET['_wpnonce'], 'ai_chatbot_export')) {
+            wp_die('Security check failed.');
+        }
+
         $conversation_id = (int) ($_GET['conversation_id'] ?? 0);
         $format = $_GET['format'] ?? 'md';
 

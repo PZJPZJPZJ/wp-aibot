@@ -282,31 +282,39 @@ class AI_Chatbot_CPT_Chatbot {
 
     public static function get_meta(int $post_id): array {
         $defaults = self::get_defaults();
+
+        // Single query to fetch all meta at once instead of N individual calls
+        $all_meta = get_post_meta($post_id);
+
         $meta = [];
         foreach ($defaults as $key => $default) {
-            $value = get_post_meta($post_id, $key, true);
+            $value = isset($all_meta[$key][0]) ? $all_meta[$key][0] : '';
             $meta[$key] = $value !== '' ? $value : $default;
         }
+
         // Decrypt API key
         if (!empty($meta['chatbot_api_key'])) {
             $meta['chatbot_api_key'] = self::decrypt($meta['chatbot_api_key']);
         }
+
         // Backward compatibility: if old primary_color was customized but new color fields aren't saved
-        $saved_primary = get_post_meta($post_id, 'chatbot_primary_color', true);
-        if ($saved_primary !== '' && $saved_primary !== $defaults['chatbot_primary_color']) {
-            if (get_post_meta($post_id, 'chatbot_popup_color', true) === '') {
-                $meta['chatbot_popup_color'] = $saved_primary;
+        $raw_primary = isset($all_meta['chatbot_primary_color'][0]) ? $all_meta['chatbot_primary_color'][0] : '';
+        if ($raw_primary !== '' && $raw_primary !== $defaults['chatbot_primary_color']) {
+            if (!isset($all_meta['chatbot_popup_color'][0]) || $all_meta['chatbot_popup_color'][0] === '') {
+                $meta['chatbot_popup_color'] = $raw_primary;
             }
-            if (get_post_meta($post_id, 'chatbot_button_color', true) === '') {
-                $meta['chatbot_button_color'] = $saved_primary;
+            if (!isset($all_meta['chatbot_button_color'][0]) || $all_meta['chatbot_button_color'][0] === '') {
+                $meta['chatbot_button_color'] = $raw_primary;
             }
         }
+
         // Backward compat: migrate flat rules to grouped format
         foreach (['chatbot_lead_capture_rules', 'chatbot_notify_rules'] as $rules_key) {
             if (!empty($meta[$rules_key]) && is_array($meta[$rules_key]) && isset($meta[$rules_key][0]['field'])) {
                 $meta[$rules_key] = [$meta[$rules_key]];
             }
         }
+
         return $meta;
     }
 
