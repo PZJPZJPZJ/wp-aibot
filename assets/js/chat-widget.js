@@ -76,9 +76,12 @@
                     // Render past messages
                     if (Array.isArray(data.data.messages) && data.data.messages.length > 0) {
                         this.hasHistory = true;
+                        const fragment = document.createDocumentFragment();
                         data.data.messages.forEach(function(msg) {
-                            this.addMessage(msg.role, msg.content);
+                            fragment.appendChild(this.createMessageElement(msg.role, msg.content));
                         }.bind(this));
+                        this.messagesEl.appendChild(fragment);
+                        this.scrollToBottom();
                     }
                 }
             } catch (err) {
@@ -309,7 +312,7 @@
             }
         }
 
-        addMessage(role, content) {
+        createMessageElement(role, content) {
             const div = document.createElement('div');
             div.className = 'ai-chatbot-message ai-chatbot-' + role;
 
@@ -331,6 +334,11 @@
             }
 
             div.appendChild(bubble);
+            return div;
+        }
+
+        addMessage(role, content) {
+            const div = this.createMessageElement(role, content);
             this.messagesEl.appendChild(div);
             this.scrollToBottom();
         }

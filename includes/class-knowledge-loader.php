@@ -13,13 +13,16 @@ class AI_Chatbot_Knowledge_Loader {
             return '';
         }
 
+        $docs = get_posts([
+            'post__in'       => (array) $knowledge_ids,
+            'post_type'      => 'ai_knowledge',
+            'post_status'    => 'publish',
+            'posts_per_page' => -1,
+        ]);
+
         $parts = [];
-        foreach ((array) $knowledge_ids as $doc_id) {
-            $doc = get_post($doc_id);
-            if (!$doc || $doc->post_status !== 'publish') {
-                continue;
-            }
-            $markdown = get_post_meta($doc_id, 'knowledge_markdown', true);
+        foreach ($docs as $doc) {
+            $markdown = get_post_meta($doc->ID, 'knowledge_markdown', true);
             if (!empty($markdown)) {
                 $parts[] = "---\nSource: {$doc->post_title}\n{$markdown}\n---";
             }

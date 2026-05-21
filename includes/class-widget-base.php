@@ -54,6 +54,7 @@ class AI_Chatbot_Widget_Base extends \Elementor\Widget_Base {
             'post_type'      => 'ai_chatbot',
             'post_status'    => 'publish',
             'posts_per_page' => -1,
+            'no_found_rows'  => true,
         ]);
 
         $options = ['' => __('— Select a Chatbot —', 'wp-aibot')];

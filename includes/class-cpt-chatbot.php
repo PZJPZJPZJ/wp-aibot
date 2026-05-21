@@ -288,7 +288,8 @@ class AI_Chatbot_CPT_Chatbot {
 
         $meta = [];
         foreach ($defaults as $key => $default) {
-            $value = isset($all_meta[$key][0]) ? $all_meta[$key][0] : '';
+            $raw = isset($all_meta[$key][0]) ? $all_meta[$key][0] : '';
+            $value = $raw !== '' ? maybe_unserialize($raw) : '';
             $meta[$key] = $value !== '' ? $value : $default;
         }
 

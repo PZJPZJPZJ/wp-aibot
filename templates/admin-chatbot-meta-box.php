@@ -408,7 +408,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
                 <label style="margin:0;"><?php esc_html_e('Knowledge Documents', 'wp-aibot'); ?></label>
                 <?php
-                $docs = get_posts(['post_type' => 'ai_knowledge', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC']);
+                $docs = get_posts(['post_type' => 'ai_knowledge', 'post_status' => 'publish', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC', 'no_found_rows' => true]);
                 $selected_ids = (array) ($meta['chatbot_knowledge_ids'] ?? []);
                 $total_docs = count($docs);
                 $selected_count = count(array_intersect($selected_ids, wp_list_pluck($docs, 'ID')));
