@@ -143,7 +143,7 @@
                         <div class="ai-chatbot-header">
                             <span class="ai-chatbot-title">${i18n.title || 'AI Assistant'}</span>
                             <span class="ai-chatbot-subtitle">${i18n.subtitle || 'Ask me anything'}</span>
-                            <button class="ai-chatbot-close"><i class="fa fa-times"></i></button>
+                            <button class="ai-chatbot-close">✕</button>
                         </div>
                         <div class="ai-chatbot-messages"></div>
                         <div class="ai-chatbot-input-area">
@@ -400,6 +400,9 @@
             if (!icon) return '💬';
             if (icon.indexOf('fa-') === 0) {
                 return '<i class="fa ' + icon + '"></i>';
+            }
+            if (icon.indexOf('dashicons-') === 0) {
+                return '<span class="dashicons ' + icon + '"></span>';
             }
             return icon;
         }

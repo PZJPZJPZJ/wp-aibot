@@ -79,7 +79,7 @@ class AI_Chatbot_Plugin {
     public static function render_chatbot_html(int $chatbot_id, string $widget_id = ''): string {
         // Ensure CSS and JS are always loaded, regardless of how the widget is rendered
         wp_enqueue_style('ai-chat-widget', AI_CHATBOT_URL . 'assets/css/chat-widget.css', [], AI_CHATBOT_VERSION);
-        wp_enqueue_style('font-awesome', 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css', [], '4.7.0');
+        self::enqueue_font_awesome();
         wp_enqueue_script('ai-chat-widget', AI_CHATBOT_URL . 'assets/js/chat-widget.js', [], AI_CHATBOT_VERSION, true);
 
         // Always set global API config (safe to call multiple times — WordPress merges)
@@ -96,6 +96,10 @@ class AI_Chatbot_Plugin {
 
         // Pass config to JS
         $fab_icon = $config['chatbot_fab_icon'] ?: 'fa-comment';
+        // Enqueue Dashicons on frontend if the icon uses it
+        if (strpos($fab_icon, 'dashicons-') === 0) {
+            wp_enqueue_style('dashicons');
+        }
         wp_localize_script('ai-chat-widget', 'AIChatConfig_' . $widget_id, [
             'chatbot_id'    => $chatbot_id,
             'session_id'    => '',
@@ -244,6 +248,9 @@ class AI_Chatbot_Plugin {
         }
         wp_enqueue_style('ai-chatbot-admin', AI_CHATBOT_URL . 'assets/css/admin.css', [], AI_CHATBOT_VERSION);
 
+        // Always enqueue Dashicons for the icon selector
+        wp_enqueue_style('dashicons');
+
         // Load widget CSS/JS on chatbot edit screen for the live preview
         if ($screen->post_type === 'ai_chatbot' && $screen->base === 'post') {
             $this->enqueue_widget_assets();
@@ -264,6 +271,22 @@ class AI_Chatbot_Plugin {
     }
 
     /**
+     * Enqueue Font Awesome 4 — uses Elementor's FA4 shim if available, otherwise loads from CDN.
+     */
+    private static function enqueue_font_awesome(): void {
+        if (did_action('elementor/loaded') && wp_style_is('font-awesome-4-shim', 'registered')) {
+            wp_enqueue_style('font-awesome-4-shim');
+            return;
+        }
+        wp_enqueue_style(
+            'font-awesome',
+            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css',
+            [],
+            '4.7.0'
+        );
+    }
+
+    /**
      * Enqueue the chatbot widget CSS and JS.
      */
     public function enqueue_widget_assets(): void {
@@ -274,13 +297,7 @@ class AI_Chatbot_Plugin {
             AI_CHATBOT_VERSION
         );
 
-        // Font Awesome 4 for FAB icon
-        wp_enqueue_style(
-            'font-awesome',
-            'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css',
-            [],
-            '4.7.0'
-        );
+        self::enqueue_font_awesome();
 
         wp_enqueue_script(
             'ai-chat-widget',
@@ -289,7 +306,6 @@ class AI_Chatbot_Plugin {
             AI_CHATBOT_VERSION,
             true
         );
-
     }
 
     public function plugin_action_links(array $links): array {

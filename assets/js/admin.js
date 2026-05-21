@@ -120,6 +120,8 @@
         function updateFaPreview(icon) {
             if (icon && icon.indexOf('fa-') === 0) {
                 $faPreview.html('<i class="fa ' + icon + '"></i>');
+            } else if (icon && icon.indexOf('dashicons-') === 0) {
+                $faPreview.html('<span class="dashicons ' + icon + '" style="font-size:24px;width:auto;height:auto;"></span>');
             } else if (icon) {
                 $faPreview.html('<span style="font-size:20px;">' + icon + '</span>');
             } else {

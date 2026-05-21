@@ -78,19 +78,23 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         </div>
 
         <div class="ai-chatbot-field">
-            <label for="chatbot_fab_icon"><?php esc_html_e('FAB Icon (Font Awesome)', 'wp-aibot'); ?></label>
+            <label for="chatbot_fab_icon"><?php esc_html_e('FAB Icon', 'wp-aibot'); ?></label>
             <div style="display:flex;align-items:center;gap:10px;">
-                <input type="text" id="chatbot_fab_icon" name="chatbot_fab_icon" value="<?php echo esc_attr($meta['chatbot_fab_icon']); ?>" style="width:180px;" placeholder="fa-comment" />
+                <input type="text" id="chatbot_fab_icon" name="chatbot_fab_icon" value="<?php echo esc_attr($meta['chatbot_fab_icon']); ?>" style="width:200px;" placeholder="fa-comment" />
                 <span id="ai-chatbot-fa-preview" style="font-size:24px;width:32px;height:32px;text-align:center;display:flex;align-items:center;justify-content:center;">
                     <?php if (strpos($meta['chatbot_fab_icon'], 'fa-') === 0): ?>
                     <i class="fa <?php echo esc_attr($meta['chatbot_fab_icon']); ?>"></i>
+                    <?php elseif (strpos($meta['chatbot_fab_icon'], 'dashicons-') === 0): ?>
+                    <span class="dashicons <?php echo esc_attr($meta['chatbot_fab_icon']); ?>"></span>
                     <?php else: ?>
                     <span style="font-size:20px;"><?php echo esc_html($meta['chatbot_fab_icon'] ?: '💬'); ?></span>
                     <?php endif; ?>
                 </span>
             </div>
-            <div class="description" style="margin-top:6px;"><?php esc_html_e('Enter a Font Awesome 4 class name (e.g., fa-comment, fa-comments, fa-weixin). Emoji also supported.', 'wp-aibot'); ?></div>
-            <div class="ai-chatbot-fa-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;max-width:400px;">
+            <div class="description" style="margin-top:6px;"><?php esc_html_e('Enter a Font Awesome 4 class (e.g., fa-comment) or Dashicons class (e.g., dashicons-format-chat). Emoji also supported.', 'wp-aibot'); ?></div>
+
+            <h4 style="margin:16px 0 6px;font-size:12px;text-transform:uppercase;color:#666;"><?php esc_html_e('Font Awesome 4', 'wp-aibot'); ?></h4>
+            <div class="ai-chatbot-fa-grid" style="display:flex;flex-wrap:wrap;gap:6px;max-width:400px;">
                 <?php
                 $fa_icons = ['fa-comment', 'fa-comments', 'fa-commenting', 'fa-comment-o', 'fa-comments-o', 'fa-weixin', 'fa-send', 'fa-envelope', 'fa-phone', 'fa-question-circle', 'fa-smile-o', 'fa-bell', 'fa-globe', 'fa-cog'];
                 $current_icon = $meta['chatbot_fab_icon'];
@@ -99,6 +103,19 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 ?>
                 <span class="ai-chatbot-fa-option" data-icon="<?php echo esc_attr($fa); ?>"<?php echo $active; ?> title="<?php echo esc_attr($fa); ?>">
                     <i class="fa <?php echo esc_attr($fa); ?>"></i>
+                </span>
+                <?php endforeach; ?>
+            </div>
+
+            <h4 style="margin:12px 0 6px;font-size:12px;text-transform:uppercase;color:#666;"><?php esc_html_e('Dashicons (Fallback)', 'wp-aibot'); ?></h4>
+            <div class="ai-chatbot-fa-grid" style="display:flex;flex-wrap:wrap;gap:6px;max-width:400px;">
+                <?php
+                $dashicons = ['dashicons-format-chat', 'dashicons-format-status', 'dashicons-testimonial', 'dashicons-admin-comments', 'dashicons-email', 'dashicons-phone', 'dashicons-editor-help', 'dashicons-thumbs-up', 'dashicons-star-filled', 'dashicons-heart', 'dashicons-lightbulb', 'dashicons-bell', 'dashicons-admin-users', 'dashicons-feedback'];
+                foreach ($dashicons as $d):
+                    $active = ($d === $current_icon) ? ' style="border-color:#2271b1;background:#f0f6fc;"' : '';
+                ?>
+                <span class="ai-chatbot-fa-option" data-icon="<?php echo esc_attr($d); ?>"<?php echo $active; ?> title="<?php echo esc_attr($d); ?>">
+                    <span class="dashicons <?php echo esc_attr($d); ?>"></span>
                 </span>
                 <?php endforeach; ?>
             </div>

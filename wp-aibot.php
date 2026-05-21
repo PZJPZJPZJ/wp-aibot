@@ -5,7 +5,6 @@
  * Version: 1.0.0
  * Requires at least: 6.7
  * Requires PHP: 8.0
- * Plugin URI: https://github.com/pzjpzjpzj/wp-aibot
  * Author: AzzDev
  * License: GPL v2 or later
  * License URI: https://www.gnu.org/licenses/gpl-2.0.html
