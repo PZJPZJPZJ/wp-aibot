@@ -35,6 +35,9 @@ class AI_Chatbot_Plugin {
         // Widget (Elementor integration)
         require_once $includes . 'class-widget.php';
 
+        // Logger (loaded early, used by both admin and frontend)
+        require_once $includes . 'class-logger.php';
+
         // Admin
         if (is_admin()) {
             require_once $includes . 'class-admin-columns.php';
@@ -56,6 +59,8 @@ class AI_Chatbot_Plugin {
 
         // AJAX handlers
         add_action('wp_ajax_ai_chatbot_preview', ['AI_Chatbot_Admin_Ajax', 'preview']);
+        add_action('wp_ajax_ai_chatbot_toggle_logging', [self::class, 'ajax_toggle_logging']);
+        add_action('wp_ajax_ai_chatbot_clear_logs', [self::class, 'ajax_clear_logs']);
     }
 
     /**
@@ -239,6 +244,25 @@ class AI_Chatbot_Plugin {
 
     public function register_api_routes(): void {
         AI_Chatbot_Chat_API::register_routes();
+    }
+
+    public static function ajax_toggle_logging(): void {
+        check_ajax_referer('ai_chatbot_toggle_logging');
+        if (!current_user_can('manage_options')) {
+            wp_die(-1);
+        }
+        $enabled = !empty($_POST['enabled']);
+        update_option('ai_chatbot_logging_enabled', $enabled ? '1' : '0');
+        wp_die('1');
+    }
+
+    public static function ajax_clear_logs(): void {
+        check_ajax_referer('ai_chatbot_clear_logs');
+        if (!current_user_can('manage_options')) {
+            wp_die(-1);
+        }
+        AI_Chatbot_Logger::clear();
+        wp_die('1');
     }
 
     public function enqueue_admin_assets(string $hook): void {

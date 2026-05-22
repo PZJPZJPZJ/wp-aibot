@@ -412,3 +412,96 @@
     border-color: #2271b1;
     background: #f0f6fc;
 }
+
+/* ==========================================
+   Log Page Styles
+   ========================================== */
+.ai-chatbot-log-page .ai-chatbot-log-settings {
+    background: #fff;
+    border: 1px solid #dcdcde;
+    padding: 16px 20px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    max-width: 720px;
+}
+
+.ai-chatbot-log-table .log-level-error {
+    border-left: 4px solid #d63638;
+}
+.ai-chatbot-log-table .log-level-warning {
+    border-left: 4px solid #dba617;
+}
+.ai-chatbot-log-table .log-level-info {
+    border-left: 4px solid #2271b1;
+}
+.ai-chatbot-log-table .log-level-debug {
+    border-left: 4px solid #888;
+}
+
+.log-badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    line-height: 1.6;
+}
+.log-badge-error {
+    background: #fcf0f1;
+    color: #d63638;
+    border: 1px solid #f1adad;
+}
+.log-badge-warning {
+    background: #fcf9e8;
+    color: #996800;
+    border: 1px solid #f0c33c;
+}
+.log-badge-info {
+    background: #f0f6fc;
+    color: #2271b1;
+    border: 1px solid #c5d9ed;
+}
+.log-badge-debug {
+    background: #f6f7f7;
+    color: #50575e;
+    border: 1px solid #dcdcde;
+}
+
+.log-detail-row td {
+    background: #f0f0f1;
+    padding: 12px 16px;
+}
+.log-detail-content {
+    max-height: 400px;
+    overflow-y: auto;
+}
+.log-context-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.log-context-table th {
+    text-align: left;
+    font-weight: 600;
+    padding: 4px 10px 4px 0;
+    width: 200px;
+    font-size: 12px;
+    color: #50575e;
+    vertical-align: top;
+}
+.log-context-table td {
+    padding: 4px 0;
+}
+.log-context-table pre {
+    margin: 0;
+    font-size: 11px;
+    background: #fff;
+    border: 1px solid #dcdcde;
+    border-radius: 3px;
+    padding: 6px 8px;
+    overflow-x: auto;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 200px;
+    overflow-y: auto;
+}

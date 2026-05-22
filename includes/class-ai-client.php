@@ -46,13 +46,33 @@ class AI_Chatbot_AI_Client {
         ]);
 
         if (is_wp_error($response)) {
+            AI_Chatbot_Logger::error('OpenAI API HTTP error', [
+                'error_message' => $response->get_error_message(),
+                'api_url'       => $api_url,
+            ]);
             return null;
         }
 
         $status = wp_remote_retrieve_response_code($response);
-        $data = json_decode(wp_remote_retrieve_body($response), true);
+        $raw_body = wp_remote_retrieve_body($response);
+        $data = json_decode($raw_body, true);
 
-        if ($status !== 200 || !isset($data['choices'][0]['message']['content'])) {
+        if ($status !== 200) {
+            $error_detail = $data['error']['message'] ?? $data['error'] ?? wp_remote_retrieve_response_message($response);
+            AI_Chatbot_Logger::error('OpenAI API returned error status', [
+                'status_code'    => $status,
+                'error_detail'   => is_string($error_detail) ? $error_detail : wp_json_encode($error_detail),
+                'model'          => $body['model'],
+                'api_url'        => $api_url,
+            ]);
+            return null;
+        }
+
+        if (!isset($data['choices'][0]['message']['content'])) {
+            AI_Chatbot_Logger::error('OpenAI API response missing content', [
+                'status_code' => $status,
+                'raw_response' => AI_Chatbot_Logger::truncate($raw_body, 500),
+            ]);
             return null;
         }
 
@@ -102,13 +122,33 @@ class AI_Chatbot_AI_Client {
         ]);
 
         if (is_wp_error($response)) {
+            AI_Chatbot_Logger::error('Anthropic API HTTP error', [
+                'error_message' => $response->get_error_message(),
+                'api_url'       => $api_url,
+            ]);
             return null;
         }
 
         $status = wp_remote_retrieve_response_code($response);
-        $data = json_decode(wp_remote_retrieve_body($response), true);
+        $raw_body = wp_remote_retrieve_body($response);
+        $data = json_decode($raw_body, true);
 
-        if ($status !== 200 || !isset($data['content'][0]['text'])) {
+        if ($status !== 200) {
+            $error_detail = $data['error']['message'] ?? $data['error'] ?? wp_remote_retrieve_response_message($response);
+            AI_Chatbot_Logger::error('Anthropic API returned error status', [
+                'status_code'    => $status,
+                'error_detail'   => is_string($error_detail) ? $error_detail : wp_json_encode($error_detail),
+                'model'          => $body['model'],
+                'api_url'        => $api_url,
+            ]);
+            return null;
+        }
+
+        if (!isset($data['content'][0]['text'])) {
+            AI_Chatbot_Logger::error('Anthropic API response missing content', [
+                'status_code'  => $status,
+                'raw_response' => AI_Chatbot_Logger::truncate($raw_body, 500),
+            ]);
             return null;
         }
 

@@ -102,21 +102,82 @@ class AI_Chatbot_Chat_API {
         // Build messages
         $messages = self::build_messages($config, $knowledge_context, $history, $message, $existing_summary);
 
+        // Log prompt diagnostics
+        $system_prompt = $messages[0]['content'] ?? '';
+        $know_chars = mb_strlen($knowledge_context);
+        $total_est_tokens = AI_Chatbot_Logger::estimate_tokens($system_prompt)
+            + array_sum(array_map(function ($m) {
+                return AI_Chatbot_Logger::estimate_tokens($m['content'] ?? '');
+            }, $history))
+            + AI_Chatbot_Logger::estimate_tokens($message);
+
+        AI_Chatbot_Logger::info('Chat request prepared', [
+            'chatbot_id'              => $chatbot_id,
+            'chatbot_name'            => get_the_title($chatbot_id),
+            'model'                   => $config['chatbot_model'] ?? 'unknown',
+            'platform'                => $config['chatbot_platform'] ?? 'openai',
+            'system_prompt_chars'     => mb_strlen($system_prompt),
+            'system_prompt_tokens_est'=> AI_Chatbot_Logger::estimate_tokens($system_prompt),
+            'knowledge_context_chars' => $know_chars,
+            'knowledge_context_tokens'=> AI_Chatbot_Logger::estimate_tokens($knowledge_context),
+            'history_messages'        => count($history),
+            'history_total_chars'     => array_sum(array_map(function ($m) {
+                return mb_strlen($m['content'] ?? '');
+            }, $history)),
+            'current_message_chars'   => mb_strlen($message),
+            'total_messages'          => count($messages),
+            'total_estimated_tokens'  => $total_est_tokens,
+            'max_tokens_setting'      => (int) ($config['chatbot_max_tokens'] ?? 2000),
+        ]);
+
+        // Warn if knowledge context is very large
+        if ($know_chars > 30000) {
+            AI_Chatbot_Logger::warning('Large knowledge context detected - may exceed token limits', [
+                'chatbot_id'      => $chatbot_id,
+                'knowledge_chars' => $know_chars,
+                'knowledge_tokens_est' => AI_Chatbot_Logger::estimate_tokens($knowledge_context),
+                'total_tokens_est'     => $total_est_tokens,
+            ]);
+        }
+
         // Call AI
         $ai_client = new AI_Chatbot_AI_Client($config);
         $result = $ai_client->chat($messages);
 
         if ($result === null) {
+            AI_Chatbot_Logger::error('AI request failed - null response', [
+                'chatbot_id'   => $chatbot_id,
+                'model'        => $config['chatbot_model'] ?? 'unknown',
+                'platform'     => $config['chatbot_platform'] ?? 'unknown',
+                'total_prompt_chars' => mb_strlen($system_prompt) + array_sum(array_map(function ($m) {
+                    return mb_strlen($m['content'] ?? '');
+                }, $history)) + mb_strlen($message),
+            ]);
             return self::error('ai_error', 'AI service error. Please try again.', 502);
         }
 
         $ai_content = $result['content'];
+        $token_usage = $result['raw']['usage'] ?? [];
+
+        AI_Chatbot_Logger::info('Chat response received', [
+            'chatbot_id'         => $chatbot_id,
+            'model'              => $config['chatbot_model'] ?? 'unknown',
+            'response_chars'     => mb_strlen($ai_content),
+            'response_tokens_est'=> AI_Chatbot_Logger::estimate_tokens($ai_content),
+            'prompt_tokens'      => $token_usage['prompt_tokens'] ?? 'unknown',
+            'completion_tokens'  => $token_usage['completion_tokens'] ?? 'unknown',
+            'total_tokens'       => $token_usage['total_tokens'] ?? 'unknown',
+        ]);
 
         // Parse lead
         $lead_processor = new AI_Chatbot_Lead_Processor();
         $parsed = $lead_processor->parse($ai_content);
 
         if ($parsed === null) {
+            AI_Chatbot_Logger::warning('Failed to parse lead data from AI response', [
+                'chatbot_id'     => $chatbot_id,
+                'response_preview' => mb_substr($ai_content, 0, 200),
+            ]);
             return new WP_REST_Response([
                 'ok'   => true,
                 'data' => [

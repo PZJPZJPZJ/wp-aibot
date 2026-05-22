@@ -18,6 +18,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         <button type="button" class="ai-chatbot-tab-btn" data-tab="memory"><?php esc_html_e('Memory', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="capture"><?php esc_html_e('Lead Capture', 'wp-aibot'); ?></button>
         <button type="button" class="ai-chatbot-tab-btn" data-tab="notify"><?php esc_html_e('Notifications', 'wp-aibot'); ?></button>
+        <button type="button" class="ai-chatbot-tab-btn" data-tab="logs"><?php esc_html_e('Logs', 'wp-aibot'); ?></button>
     </nav>
 
     <!-- Basic Settings -->
@@ -814,4 +815,148 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             </div>
         </div>
     </div>
+
+    <!-- Logs -->
+    <div class="ai-chatbot-tab-panel" data-tab="logs">
+        <?php
+        $logs = AI_Chatbot_Logger::is_enabled()
+            ? AI_Chatbot_Logger::get_logs(200)
+            : [];
+        $log_cid = $post->ID;
+        $enabled = AI_Chatbot_Logger::is_enabled();
+        ?>
+
+        <div class="ai-chatbot-field">
+            <label>
+                <input type="checkbox" id="ai-chatbot-log-toggle" value="1" <?php checked($enabled); ?> />
+                <?php esc_html_e('Enable Logging', 'wp-aibot'); ?>
+            </label>
+            <p class="description">
+                <?php esc_html_e('Log AI chat requests for this chatbot (up to 500 entries globally). Useful for diagnosing token limit issues, API errors, or prompt problems. Disable on production when not troubleshooting.', 'wp-aibot'); ?>
+            </p>
+        </div>
+
+        <?php if ($enabled): ?>
+            <div style="margin-bottom:12px;display:flex;gap:8px;align-items:center;">
+                <button type="button" class="button button-secondary" id="ai-chatbot-log-refresh">
+                    <?php esc_html_e('Refresh', 'wp-aibot'); ?>
+                </button>
+                <button type="button" class="button button-secondary" id="ai-chatbot-log-clear"
+                    onclick="return confirm('<?php esc_attr_e('Clear all logs?', 'wp-aibot'); ?>');">
+                    <?php esc_html_e('Clear All Logs', 'wp-aibot'); ?>
+                </button>
+                <span id="ai-chatbot-log-saving" style="display:none;color:#666;">
+                    <span class="spinner is-active" style="float:none;margin:0;"></span> <?php esc_html_e('Saving...', 'wp-aibot'); ?>
+                </span>
+            </div>
+
+            <table class="wp-list-table widefat fixed striped ai-chatbot-log-table" id="ai-chatbot-log-table">
+                <thead>
+                    <tr>
+                        <th scope="col" style="width:160px;"><?php esc_html_e('Time', 'wp-aibot'); ?></th>
+                        <th scope="col" style="width:70px;"><?php esc_html_e('Level', 'wp-aibot'); ?></th>
+                        <th scope="col"><?php esc_html_e('Message', 'wp-aibot'); ?></th>
+                        <th scope="col" style="width:60px;"><?php esc_html_e('Details', 'wp-aibot'); ?></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php
+                    $has_rows = false;
+                    foreach ($logs as $i => $log):
+                        $cid = $log['context']['chatbot_id'] ?? 0;
+                        if ((int) $cid !== $log_cid) {
+                            continue;
+                        }
+                        $has_rows = true;
+                        $level_class = 'log-level-' . ($log['level'] ?? 'info');
+                        $detail_id = 'log-detail-' . $i;
+                    ?>
+                        <tr class="<?php echo esc_attr($level_class); ?>">
+                            <td><?php echo esc_html($log['time'] ?? ''); ?></td>
+                            <td>
+                                <span class="log-badge log-badge-<?php echo esc_attr($log['level'] ?? 'info'); ?>">
+                                    <?php echo esc_html(strtoupper($log['level'] ?? 'INFO')); ?>
+                                </span>
+                            </td>
+                            <td><?php echo esc_html($log['message'] ?? ''); ?></td>
+                            <td>
+                                <?php if (!empty($log['context'])): ?>
+                                    <button type="button" class="button button-small log-toggle"
+                                        data-target="<?php echo esc_attr($detail_id); ?>">
+                                        <?php esc_html_e('View', 'wp-aibot'); ?>
+                                    </button>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                        <?php if (!empty($log['context'])): ?>
+                            <tr class="log-detail-row" id="<?php echo esc_attr($detail_id); ?>" style="display:none;">
+                                <td colspan="4">
+                                    <div class="log-detail-content">
+                                        <table class="log-context-table">
+                                            <?php foreach ($log['context'] as $ckey => $cval):
+                                                $display_val = AI_Chatbot_Logger::format_context_value($cval, 500);
+                                            ?>
+                                                <tr>
+                                                    <th><?php echo esc_html($ckey); ?></th>
+                                                    <td><pre><?php echo esc_html($display_val); ?></pre></td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </table>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endif; ?>
+                    <?php endforeach; ?>
+                    <?php if (!$has_rows): ?>
+                        <tr><td colspan="4"><?php esc_html_e('No log entries for this chatbot yet.', 'wp-aibot'); ?></td></tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </div>
 </div>
+
+<script>
+jQuery(function($) {
+    // Log toggle button details
+    $(document).on('click', '.log-toggle', function() {
+        var target = $('#' + $(this).data('target'));
+        target.toggle();
+        $(this).text(target.is(':visible') ? '<?php echo esc_js(__('Hide', 'wp-aibot')); ?>' : '<?php echo esc_js(__('View', 'wp-aibot')); ?>');
+    });
+
+    // Enable/disable logging via AJAX
+    $('#ai-chatbot-log-toggle').on('change', function() {
+        var enabled = $(this).is(':checked') ? '1' : '0';
+        var $saving = $('#ai-chatbot-log-saving');
+        $saving.show();
+        $.post(ajaxurl, {
+            action: 'ai_chatbot_toggle_logging',
+            enabled: enabled,
+            _ajax_nonce: '<?php echo esc_js(wp_create_nonce('ai_chatbot_toggle_logging')); ?>'
+        }).always(function() {
+            $saving.hide();
+            location.reload();
+        });
+    });
+
+    // Clear logs via AJAX
+    $('#ai-chatbot-log-clear').on('click', function() {
+        if (!confirm('<?php echo esc_js(__('Clear all log entries?', 'wp-aibot')); ?>')) return;
+        var $saving = $('#ai-chatbot-log-saving');
+        $saving.show();
+        $.post(ajaxurl, {
+            action: 'ai_chatbot_clear_logs',
+            _ajax_nonce: '<?php echo esc_js(wp_create_nonce('ai_chatbot_clear_logs')); ?>'
+        }).always(function() {
+            $saving.hide();
+            location.reload();
+        });
+    });
+
+    // Refresh logs
+    $('#ai-chatbot-log-refresh').on('click', function() {
+        location.reload();
+    });
+});
+</script>
