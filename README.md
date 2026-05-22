@@ -15,17 +15,3 @@
 - **通知** — 企业微信 Webhook + Email，基于线索评分触发
 
 ---
-
-## 扩展预留
-
-| 预留点 | 未来接入方式 |
-|--------|------------|
-| **RAG 检索** | 替换 `load_context()` 为检索逻辑，外部系统通过 filter 接入 |
-| **Embeddings API** | 已预留 `embed()` 方法，后续接入向量数据库 |
-| **多 AI Provider** | 定义 `AI_Provider_Interface`，新增 Provider 实现该接口，如 Anthropic / Gemini / Ollama |
-| **Streaming** | 客户端 EventSource，服务端 Chunked 输出 |
-| **第三方通知** | 通过 `apply_filters` 支持 Slack / Discord / Telegram |
-| **Gutenberg Block** | 注册 `wp.block` 与 Elementor Widget 类似 |
-| **Analytics** | 后台图表统计（对话量、线索转化率等） |
-
----
