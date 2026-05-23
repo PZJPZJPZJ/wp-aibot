@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP AIBot
  * Description: AI-powered chatbot plugin. Supports OpenAI-compatible APIs, knowledge base, lead capture, and multi-bot management.
- * Version: 1.0.0
+ * Version: 2.0.0
  * Requires at least: 6.7
  * Requires PHP: 8.0
  * Author: AzzDev

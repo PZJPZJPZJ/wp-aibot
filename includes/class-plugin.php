@@ -38,6 +38,10 @@ class AI_Chatbot_Plugin {
         // Logger (loaded early, used by both admin and frontend)
         require_once $includes . 'class-logger.php';
 
+        // GitHub updater (attaches hooks unconditionally so WP can detect updates)
+        require_once $includes . 'class-github-updater.php';
+        new WP_Plugin_Github_Updater(AI_CHATBOT_FILE);
+
         // Admin
         if (is_admin()) {
             require_once $includes . 'class-admin-columns.php';
