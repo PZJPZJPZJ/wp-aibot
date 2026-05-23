@@ -212,15 +212,20 @@
         bindRangeSlider('chatbot_fab_ripple_radius', 'ai-chatbot-ripple-radius-val', function(v) { return v + 'x'; });
         bindRangeSlider('chatbot_temperature', 'ai-chatbot-temp-val');
 
-        // ===== Cache TTL toggle =====
+        // ===== Cache TTL & Open Delay toggle =====
         var defaultOpenToggle = document.querySelector('[name="chatbot_fab_default_open"]');
         var cacheTtlField = document.getElementById('ai-chatbot-cache-ttl-field');
-        function toggleCacheTtl() {
-            cacheTtlField.style.display = defaultOpenToggle && defaultOpenToggle.checked ? 'block' : 'none';
+        var openDelayField = document.getElementById('ai-chatbot-open-delay-field');
+        var transitionField = document.getElementById('ai-chatbot-transition-field');
+        function toggleOpenFields() {
+            var show = defaultOpenToggle && defaultOpenToggle.checked;
+            if (cacheTtlField) cacheTtlField.style.display = show ? 'block' : 'none';
+            if (openDelayField) openDelayField.style.display = show ? 'block' : 'none';
+            if (transitionField) transitionField.style.display = show ? 'block' : 'none';
         }
-        if (defaultOpenToggle && cacheTtlField) {
-            defaultOpenToggle.addEventListener('change', toggleCacheTtl);
-            toggleCacheTtl();
+        if (defaultOpenToggle) {
+            defaultOpenToggle.addEventListener('change', toggleOpenFields);
+            toggleOpenFields();
         }
 
         // ===== WeCom guide toggle =====

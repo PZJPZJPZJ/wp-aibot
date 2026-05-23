@@ -186,6 +186,11 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 <label for="chatbot_fab_hint_text"><?php esc_html_e('Hint text color', 'wp-aibot'); ?></label>
                 <input type="color" id="chatbot_fab_hint_text" name="chatbot_fab_hint_text" value="<?php echo esc_attr($meta['chatbot_fab_hint_text']); ?>" style="width:60px;height:36px;padding:2px;cursor:pointer;" />
             </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_fab_hint_font_size"><?php esc_html_e('Hint font size (px)', 'wp-aibot'); ?></label>
+                <input type="number" id="chatbot_fab_hint_font_size" name="chatbot_fab_hint_font_size" value="<?php echo esc_attr($meta['chatbot_fab_hint_font_size']); ?>" min="8" max="48" style="max-width:100px;" />
+                <div class="description"><?php esc_html_e('Font size of the hint tooltip text (8-48px).', 'wp-aibot'); ?></div>
+            </div>
         </div>
         <div class="ai-chatbot-field-row">
             <div class="ai-chatbot-field">
@@ -199,6 +204,16 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                 <label for="chatbot_open_cache_ttl"><?php esc_html_e('Cache TTL (minutes)', 'wp-aibot'); ?></label>
                 <input type="number" id="chatbot_open_cache_ttl" name="chatbot_open_cache_ttl" value="<?php echo esc_attr($meta['chatbot_open_cache_ttl']); ?>" min="1" max="10080" style="max-width:100px;" />
                 <div class="description"><?php esc_html_e('How long to remember the closed state (1-10080 min, default 1440 = 24h).', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field" id="ai-chatbot-open-delay-field">
+                <label for="chatbot_fab_open_delay"><?php esc_html_e('Open delay (seconds)', 'wp-aibot'); ?></label>
+                <input type="number" id="chatbot_fab_open_delay" name="chatbot_fab_open_delay" value="<?php echo esc_attr($meta['chatbot_fab_open_delay']); ?>" min="0" max="300" style="max-width:100px;" />
+                <div class="description"><?php esc_html_e('Delay in seconds before the popup auto-opens. Set 0 to open immediately.', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field" id="ai-chatbot-transition-field">
+                <label for="chatbot_popup_transition_duration"><?php esc_html_e('Popup transition (ms)', 'wp-aibot'); ?></label>
+                <input type="number" id="chatbot_popup_transition_duration" name="chatbot_popup_transition_duration" value="<?php echo esc_attr($meta['chatbot_popup_transition_duration']); ?>" min="0" max="1000" style="max-width:100px;" />
+                <div class="description"><?php esc_html_e('Fade-in/out duration for the popup (0-1000ms). Set 0 to disable.', 'wp-aibot'); ?></div>
             </div>
         </div>
 

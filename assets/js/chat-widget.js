@@ -107,7 +107,14 @@
                             cached = null;
                         }
                     }
-                    this.toggleChat(cached !== 'closed');
+                    // Open after configurable delay (seconds) if not cached as closed
+                    var delay = Number(this.config.fab_open_delay || 0) * 1000;
+                    if (cached !== 'closed') {
+                        var self = this;
+                        setTimeout(function() {
+                            self.toggleChat(true);
+                        }, delay);
+                    }
                 } else {
                     this.toggleChat(false);
                 }
@@ -136,13 +143,14 @@
                     }
                 }
                 var hint = this.config.fab_hint ? '<div class="ai-chatbot-fab-hint ai-chatbot-fab-hint-' + (this.config.fab_hint_position || 'right') + '"><span>' + this.config.fab_hint + '</span></div>' : '';
+                var iconHtml = '<span class="ai-chatbot-fab-icon' + shakeClass + '">' + this.renderFabIcon(this.config.fab_icon) + '</span>';
+                var buttonInner = rippleDivs + iconHtml;
                 html = `
                     <div class="ai-chatbot-fab" data-widget="${this.widgetId}">
+                        <div class="ai-chatbot-fab-button">${buttonInner}</div>
                         ${hint}
-                        ${rippleDivs}
-                        <span class="ai-chatbot-fab-icon${shakeClass}">${this.renderFabIcon(this.config.fab_icon)}</span>
                     </div>
-                    <div class="ai-chatbot-popup" style="display:none;">
+                    <div class="ai-chatbot-popup">
                         <div class="ai-chatbot-header">
                             <span class="ai-chatbot-title">${i18n.title || 'AI Assistant'}</span>
                             <span class="ai-chatbot-subtitle">${i18n.subtitle || 'Ask me anything'}</span>
@@ -213,7 +221,7 @@
             this.isOpen = forceState !== undefined ? forceState : !this.isOpen;
 
             if (this.isOpen) {
-                this.popupEl.style.display = 'flex';
+                this.popupEl.classList.add('is-open');
                 // Ensure popup stays within viewport
                 requestAnimationFrame(function() {
                     var rect = this.popupEl.getBoundingClientRect();
@@ -231,7 +239,7 @@
                     this.inputEl.focus();
                 }
             } else {
-                this.popupEl.style.display = 'none';
+                this.popupEl.classList.remove('is-open');
                 // Reset inline styles to let CSS variables take over
                 this.popupEl.style.right = '';
                 this.popupEl.style.left = '';

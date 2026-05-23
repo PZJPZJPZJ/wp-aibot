@@ -123,8 +123,11 @@ class AI_Chatbot_Plugin {
             'icon_shake'       => $config['chatbot_fab_icon_shake'] ?? '0',
             'lead_fields'      => is_array($config['chatbot_lead_fields'] ?? null) ? $config['chatbot_lead_fields'] : [],
             'fab_hint'         => $config['chatbot_fab_hint'] ?: '',
-            'fab_hint_position' => $config['chatbot_fab_hint_position'] ?: 'right',
-            'fab_default_open'  => $config['chatbot_fab_default_open'] ?? '0',
+            'fab_hint_position'  => $config['chatbot_fab_hint_position'] ?: 'right',
+            'fab_hint_font_size' => $config['chatbot_fab_hint_font_size'] ?: '13',
+            'fab_default_open'   => $config['chatbot_fab_default_open'] ?? '0',
+            'fab_open_delay'     => $config['chatbot_fab_open_delay'] ?: '20',
+            'popup_transition_duration' => $config['chatbot_popup_transition_duration'] ?: '100',
             'open_cache_ttl'    => $config['chatbot_open_cache_ttl'] ?: '1440',
             'fab_position'      => $config['chatbot_fab_position'] ?: 'bottom-right',
             'fab_distance_x'    => $config['chatbot_fab_distance_x'] ?: '24',
@@ -147,6 +150,8 @@ class AI_Chatbot_Plugin {
         $fab_dist_y = $config['chatbot_fab_distance_y'] ?: '24';
         $hint_bg = $config['chatbot_fab_hint_bg'] ?: '#333333';
         $hint_text = $config['chatbot_fab_hint_text'] ?: '#ffffff';
+        $hint_font_size = $config['chatbot_fab_hint_font_size'] ?: '15';
+        $transition_dur = $config['chatbot_popup_transition_duration'] ?: '100';
         $has_style = false;
         $container_selector = '#' . $container_id;
         $style_output = '<style id="ai-chat-theme-' . esc_attr($widget_id) . '">' . "\n";
@@ -160,6 +165,8 @@ class AI_Chatbot_Plugin {
         $style_output .= ' --fab-y: ' . esc_attr($fab_dist_y) . 'px;';
         $style_output .= ' --hint-bg: ' . esc_attr($hint_bg) . ';';
         $style_output .= ' --hint-text: ' . esc_attr($hint_text) . ';';
+        $style_output .= ' --hint-font-size: ' . esc_attr($hint_font_size) . 'px;';
+        $style_output .= ' --popup-transition-duration: ' . esc_attr($transition_dur) . 'ms;';
         $safe_popup = esc_attr($popup_color ?: '#25b366');
         $safe_button = esc_attr($button_color ?: '#25b366');
         $style_output .= ' --ai-chatbot-primary: ' . $safe_button . ';';

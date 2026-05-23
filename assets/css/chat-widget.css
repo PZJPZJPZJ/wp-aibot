@@ -35,10 +35,15 @@ button.ai-chat-contact-submit {
 }
 
 /* Floating / Popup Mode */
-div.ai-chatbot-container .ai-chatbot-fab {
+.ai-chatbot-fab {
     position: fixed;
     bottom: var(--fab-y, 24px);
     right: var(--fab-x, 24px);
+    z-index: 99999;
+    cursor: pointer;
+}
+
+.ai-chatbot-fab-button {
     width: 56px;
     height: 56px;
     border-radius: 50%;
@@ -47,13 +52,12 @@ div.ai-chatbot-container .ai-chatbot-fab {
     display: flex;
     align-items: center;
     justify-content: center;
-    cursor: pointer;
     box-shadow: 0 4px 12px rgba(0,0,0,0.2);
-    z-index: 99999;
     transition: transform 0.2s;
+    position: relative;
 }
 
-.ai-chatbot-fab:hover {
+.ai-chatbot-fab-button:hover {
     transform: scale(1.1);
 }
 
@@ -111,7 +115,7 @@ div.ai-chatbot-container .ai-chatbot-fab {
     display: block;
     background: var(--hint-bg, #333);
     color: var(--hint-text, #fff);
-    font-size: 13px;
+    font-size: var(--hint-font-size, 13px);
     padding: 8px 14px;
     border-radius: 8px;
     line-height: 1.3;
@@ -191,9 +195,21 @@ div.ai-chatbot-container .ai-chatbot-fab {
     background: #fff;
     border-radius: 16px;
     box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+    display: flex;
     flex-direction: column;
     z-index: 99999;
     overflow: hidden;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity var(--popup-transition-duration, 100ms) ease,
+                visibility var(--popup-transition-duration, 100ms) ease;
+}
+
+.ai-chatbot-popup.is-open {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
 }
 
 /* Header */
