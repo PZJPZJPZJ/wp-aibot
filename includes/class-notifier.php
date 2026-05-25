@@ -18,8 +18,9 @@ class AI_Chatbot_Notifier {
             return;
         }
 
-        // Skip if already notified for this conversation (deduplication)
-        if ($conversation_id > 0) {
+        // Deduplication: 'once' mode skips if already sent; 'always' mode re-sends on every match
+        $notify_mode = $config['chatbot_notify_mode'] ?? 'once';
+        if ($notify_mode === 'once' && $conversation_id > 0) {
             $existing_status = get_post_meta($conversation_id, 'conversation_notification_status', true);
             if ($existing_status === 'sent') {
                 return;

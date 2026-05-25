@@ -1,5 +1,5 @@
 [
-    {"path": "lead.lead_score", "type": "enum", "enum_values": "A|B|C|D", "description": "Lead score (A=hot, B=warm, C=cold, D=unknown)", "required": true},
+    {"path": "lead.lead_score", "type": "enum", "enum_values": "A|B|C|D|E", "description": "Lead score (A=info complete, B=interested+has contact, C=contact only no details, D=details only no contact, E=just asking)", "required": true},
     {"path": "lead.name", "type": "string", "description": "Visitor name", "required": false},
     {"path": "lead.email", "type": "string", "description": "Visitor email", "required": false},
     {"path": "lead.whatsapp", "type": "string", "description": "Visitor WhatsApp", "required": false},

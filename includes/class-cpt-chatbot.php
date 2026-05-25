@@ -75,6 +75,7 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_lead_capture_enabled',
             'chatbot_lead_capture_rules',
             'chatbot_notify_enabled',
+            'chatbot_notify_mode',
             'chatbot_notify_email',
             'chatbot_notify_webhook',
             'chatbot_notify_rules',
@@ -236,27 +237,13 @@ class AI_Chatbot_CPT_Chatbot {
             ],
             'chatbot_lead_score_rules' => [],
             'chatbot_lead_capture_enabled' => '1',
-            'chatbot_lead_capture_rules'   => [
-                [ // Group 1: lead_score A|B AND email empty AND whatsapp empty
-                    ['field' => 'lead.lead_score', 'operator' => 'in',    'value' => 'A,B'],
-                    ['field' => 'lead.email',      'operator' => 'empty', 'value' => ''],
-                    ['field' => 'lead.whatsapp',   'operator' => 'empty', 'value' => ''],
-                ],
-            ],
+            'chatbot_lead_capture_rules'   => self::load_default_json('lead-capture-rules.json', []),
             'chatbot_notify_enabled'   => '0',
+            'chatbot_notify_mode'     => 'once',
             'chatbot_notify_email'     => '',
             'chatbot_notify_webhook'   => '',
             'chatbot_notify_on_scores' => ['A', 'B'],
-            'chatbot_notify_rules'   => [
-                [ // Group 1: lead_score A|B AND whatsapp not empty
-                    ['field' => 'lead.lead_score', 'operator' => 'in',       'value' => 'A,B'],
-                    ['field' => 'lead.whatsapp',   'operator' => 'not_empty', 'value' => ''],
-                ],
-                [ // Group 2: lead_score A|B AND email not empty
-                    ['field' => 'lead.lead_score', 'operator' => 'in',       'value' => 'A,B'],
-                    ['field' => 'lead.email',      'operator' => 'not_empty', 'value' => ''],
-                ],
-            ],
+            'chatbot_notify_rules'   => self::load_default_json('notify-rules.json', []),
             'chatbot_i18n'             => [
                 'title'             => 'AI Assistant',
                 'subtitle'          => 'Ask me anything',
@@ -413,7 +400,7 @@ You are a professional sales-oriented AI assistant for a company website. Your p
             }
         }
         return [
-            ['path' => 'lead.lead_score',     'type' => 'enum',  'enum_values' => 'A|B|C|D', 'description' => 'Lead score (A=hot, B=warm, C=cold, D=unknown)', 'required' => true],
+            ['path' => 'lead.lead_score',     'type' => 'enum',  'enum_values' => 'A|B|C|D|E', 'description' => 'Lead score (A=info complete, B=interested+has contact, C=contact only no details, D=details only no contact, E=just asking)', 'required' => true],
             ['path' => 'lead.name',           'type' => 'string', 'description' => 'Visitor name',      'required' => false],
             ['path' => 'lead.email',          'type' => 'string', 'description' => 'Visitor email',     'required' => false],
             ['path' => 'lead.whatsapp',       'type' => 'string', 'description' => 'Visitor WhatsApp',  'required' => false],
@@ -421,6 +408,16 @@ You are a professional sales-oriented AI assistant for a company website. Your p
             ['path' => 'lead.city',           'type' => 'string', 'description' => 'Visitor city',      'required' => false],
             ['path' => 'lead.project_type',   'type' => 'string', 'description' => 'Project type/requirements', 'required' => false],
         ];
+    }
+
+    private static function load_default_json(string $filename, array $fallback): array {
+        $path = self::DEFAULTS_DIR . '/' . $filename;
+        if (!file_exists($path)) {
+            return $fallback;
+        }
+        $json = file_get_contents($path);
+        $data = json_decode($json, true);
+        return is_array($data) ? $data : $fallback;
     }
 
     /**

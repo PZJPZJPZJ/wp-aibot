@@ -1,0 +1,7 @@
+[
+    [
+        {"field": "lead.lead_score", "operator": "in", "value": "A,B,C"},
+        {"field": "lead.email", "operator": "empty", "value": ""},
+        {"field": "lead.whatsapp", "operator": "empty", "value": ""}
+    ]
+]
