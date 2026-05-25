@@ -1,0 +1,9 @@
+[
+    {"path": "lead.lead_score", "type": "enum", "enum_values": "A|B|C|D", "description": "Lead score (A=hot, B=warm, C=cold, D=unknown)", "required": true},
+    {"path": "lead.name", "type": "string", "description": "Visitor name", "required": false},
+    {"path": "lead.email", "type": "string", "description": "Visitor email", "required": false},
+    {"path": "lead.whatsapp", "type": "string", "description": "Visitor WhatsApp", "required": false},
+    {"path": "lead.country", "type": "string", "description": "Visitor country", "required": false},
+    {"path": "lead.city", "type": "string", "description": "Visitor city", "required": false},
+    {"path": "lead.project_type", "type": "string", "description": "Project type/requirements", "required": false}
+]
