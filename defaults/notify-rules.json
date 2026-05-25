@@ -1,8 +1,5 @@
 [
     [
-        {"field": "lead.lead_score", "operator": "in", "value": "B,C"}
-    ],
-    [
-        {"field": "lead.lead_score", "operator": "in", "value": "A"}
+        {"field": "lead.lead_score", "operator": "changed", "value": "A,B,C"}
     ]
 ]

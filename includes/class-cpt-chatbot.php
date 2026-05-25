@@ -239,7 +239,7 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_lead_capture_enabled' => '1',
             'chatbot_lead_capture_rules'   => self::load_default_json('lead-capture-rules.json', []),
             'chatbot_notify_enabled'   => '0',
-            'chatbot_notify_mode'     => 'once',
+            'chatbot_notify_mode'     => 'always',
             'chatbot_notify_email'     => '',
             'chatbot_notify_webhook'   => '',
             'chatbot_notify_on_scores' => ['A', 'B'],

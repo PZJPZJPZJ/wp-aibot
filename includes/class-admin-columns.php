@@ -56,14 +56,10 @@ class AI_Chatbot_Admin_Columns {
                 echo $lead ? esc_html($lead['lead_score'] ?? '—') : '—';
                 break;
             case 'notification':
-                $status = get_post_meta($post_id, 'conversation_notification_status', true);
-                $labels = [
-                    'sent'     => '<span style="color:#46b450;">✓ ' . esc_html__('Sent', 'wp-aibot') . '</span>',
-                    'failed'   => '<span style="color:#dc3232;">✗ ' . esc_html__('Failed', 'wp-aibot') . '</span>',
-                    'none'     => '<span style="color:#888;">— ' . esc_html__('No match', 'wp-aibot') . '</span>',
-                    'disabled' => '<span style="color:#bbb;">— ' . esc_html__('Disabled', 'wp-aibot') . '</span>',
-                ];
-                echo isset($labels[$status]) ? $labels[$status] : '<span style="color:#ccc;">—</span>';
+                $count = (int) get_post_meta($post_id, 'conversation_notification_count', true);
+                echo $count > 0
+                    ? '<span style="color:#46b450;">✓ ' . esc_html($count) . '</span>'
+                    : '<span style="color:#ccc;">—</span>';
                 break;
             case 'messages':
                 echo (int) get_post_meta($post_id, 'conversation_message_count', true);

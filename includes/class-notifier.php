@@ -4,32 +4,43 @@ defined('ABSPATH') || exit;
 class AI_Chatbot_Notifier {
 
     /**
+     * Previous lead data for 'changed' operator comparison.
+     * Set by notify() from conversation_lead_data post meta before evaluation.
+     */
+    private ?array $old_lead_data = null;
+
+    /**
      * Send notifications if any rule matches the parsed AI response.
      * Supports: WeCom (企业微信) Webhook and Email.
      *
      * @param array $parsed  Full parsed JSON from AI (includes 'answer', 'lead')
      * @param array $visitor_data
      * @param array $config
-     * @param int   $conversation_id  Save notification status to this conversation.
+     * @param int   $conversation_id  Save notification count to this conversation.
      */
     public function notify(array $parsed, array $visitor_data, array $config, int $conversation_id = 0): void {
         if (empty($config['chatbot_notify_enabled'])) {
-            $this->save_status($conversation_id, 'disabled');
-            return;
+            return; // disabled — no count written (0 = not sent)
         }
 
-        // Deduplication: 'once' mode skips if already sent; 'always' mode re-sends on every match
+        // Load previous lead data for 'changed' operator comparison
+        $this->old_lead_data = null;
+        if ($conversation_id > 0) {
+            $old = get_post_meta($conversation_id, 'conversation_lead_data', true);
+            $this->old_lead_data = is_array($old) ? $old : null;
+        }
+
+        // Deduplication: 'once' mode skips if already sent
         $notify_mode = $config['chatbot_notify_mode'] ?? 'once';
         if ($notify_mode === 'once' && $conversation_id > 0) {
-            $existing_status = get_post_meta($conversation_id, 'conversation_notification_status', true);
-            if ($existing_status === 'sent') {
+            $existing_count = (int) get_post_meta($conversation_id, 'conversation_notification_count', true);
+            if ($existing_count > 0) {
                 return;
             }
         }
 
         if (!$this->should_notify($parsed, $config)) {
-            $this->save_status($conversation_id, 'none');
-            return;
+            return; // no match — no count written
         }
 
         $lead_data = $parsed['lead'] ?? [];
@@ -51,20 +62,22 @@ class AI_Chatbot_Notifier {
             $email_ok = $this->send_email($config['chatbot_notify_email'], $payload, $conversation_id);
         }
 
-        // Determine overall status
-        if ($has_webhook && $has_email) {
-            $this->save_status($conversation_id, $webhook_ok && $email_ok ? 'sent' : 'failed');
-        } elseif ($has_webhook) {
-            $this->save_status($conversation_id, $webhook_ok ? 'sent' : 'failed');
-        } else {
-            $this->save_status($conversation_id, $email_ok ? 'sent' : 'failed');
+        // Increment count only if at least one channel succeeded
+        $any_ok = ($has_webhook && $webhook_ok) || ($has_email && $email_ok);
+        if ($any_ok) {
+            $this->increment_sent_count($conversation_id);
         }
     }
 
-    private function save_status(int $conversation_id, string $status): void {
-        if ($conversation_id > 0) {
-            update_post_meta($conversation_id, 'conversation_notification_status', $status);
+    /**
+     * Increment the notification sent count for a conversation.
+     */
+    private function increment_sent_count(int $conversation_id): void {
+        if ($conversation_id <= 0) {
+            return;
         }
+        $count = (int) get_post_meta($conversation_id, 'conversation_notification_count', true);
+        update_post_meta($conversation_id, 'conversation_notification_count', $count + 1);
     }
 
     /**
@@ -116,9 +129,8 @@ class AI_Chatbot_Notifier {
 
         $actual = $this->resolve_field($data, $field);
 
-        // If the field doesn't exist in the data, only empty/not_empty/neq can proceed
-        if ($actual === null && !in_array($operator, ['neq', 'empty', 'not_empty'], true)) {
-            // For simplicity, null doesn't match any rule by default
+        // If the field doesn't exist in the data, only changed/empty/not_empty/neq can proceed
+        if ($actual === null && !in_array($operator, ['neq', 'changed', 'empty', 'not_empty'], true)) {
             return false;
         }
 
@@ -161,6 +173,21 @@ class AI_Chatbot_Notifier {
 
             case 'not_empty':
                 return !empty($actual) || $actual === false || $actual === 0;
+
+            case 'changed':
+                if (!isset($this->old_lead_data)) {
+                    return false; // first exchange, nothing to compare
+                }
+                $old_value = $this->resolve_field($this->old_lead_data, $field);
+                if ($actual === $old_value) {
+                    return false; // value did not change
+                }
+                // Value changed — if expected values specified, check match
+                if ($expected !== null && $expected !== '') {
+                    $values = array_map('trim', explode(',', (string) $expected));
+                    return in_array((string) $actual, $values, true);
+                }
+                return true; // changed, no value filter
 
             default:
                 return false;

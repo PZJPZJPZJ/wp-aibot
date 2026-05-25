@@ -197,6 +197,10 @@ class AI_Chatbot_Chat_API {
         // Save to memory
         $memory->append($conversation_id, $message, $reply);
 
+        // Trigger notification before saving new lead data (needs old data for 'changed' comparison)
+        $notifier = new AI_Chatbot_Notifier();
+        $notifier->notify($parsed, $visitor_data, $config, $conversation_id);
+
         // Save lead data
         if (!empty($lead_data)) {
             update_post_meta($conversation_id, 'conversation_lead_data', $lead_data);
@@ -206,10 +210,6 @@ class AI_Chatbot_Chat_API {
         if (!empty($parsed['summary'])) {
             update_post_meta($conversation_id, 'conversation_summary', $parsed['summary']);
         }
-
-        // Trigger notification if rules match (pass full parsed data for rule evaluation)
-        $notifier = new AI_Chatbot_Notifier();
-        $notifier->notify($parsed, $visitor_data, $config, $conversation_id);
 
         return new WP_REST_Response([
             'ok'   => true,
