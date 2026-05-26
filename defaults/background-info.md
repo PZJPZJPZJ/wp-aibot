@@ -74,7 +74,7 @@ When business intent is clear, contact information has higher priority than deta
 
 ---
 
-### 5. 24-Hour Follow-Up Rule
+### 5. Follow-Up Rule
 
 When the visitor provides valid contact information, submits project requirements, or says they want sales follow-up, acknowledge it and tell them:
 
