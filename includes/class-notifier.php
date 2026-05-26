@@ -181,7 +181,12 @@ class AI_Chatbot_Notifier {
 
             case 'changed':
                 if (!isset($this->old_lead_data)) {
-                    return false; // first exchange, nothing to compare
+                    // First exchange — treat as changed from nothing so it can trigger too
+                    if ($expected !== null && $expected !== '') {
+                        $values = array_map('trim', explode(',', (string) $expected));
+                        return in_array((string) $actual, $values, true);
+                    }
+                    return true;
                 }
                 $old_value = $this->resolve_field($this->old_lead_data, $field);
                 if ($actual === $old_value) {

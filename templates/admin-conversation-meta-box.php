@@ -79,29 +79,9 @@ defined('ABSPATH') || exit;
             </tr>
             <?php endforeach; ?>
         </table>
-
-        <details style="margin-top:12px;">
-            <summary style="cursor:pointer;font-size:12px;color:#666;"><?php esc_html_e('View raw JSON', 'wp-aibot'); ?></summary>
-            <div class="ai-conv-json"><?php echo esc_html(wp_json_encode($lead_data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></div>
-        </details>
     </div>
     <?php endif; ?>
 
-    <!-- Raw History JSON -->
-    <div class="ai-conv-section">
-        <h3><?php esc_html_e('Raw Conversation Data', 'wp-aibot'); ?></h3>
-        <details>
-            <summary style="cursor:pointer;font-size:12px;color:#666;margin-bottom:8px;"><?php esc_html_e('View raw conversation JSON', 'wp-aibot'); ?></summary>
-            <?php
-            $all_meta = get_post_meta($post->ID);
-            $clean = [];
-            foreach ($all_meta as $k => $v) {
-                $clean[$k] = maybe_unserialize($v[0]);
-            }
-            ?>
-            <div class="ai-conv-json"><?php echo esc_html(wp_json_encode($clean, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE)); ?></div>
-        </details>
-    </div>
 </div>
 <script>
 var el = document.querySelector('.ai-conv-messages-scroll');

@@ -589,7 +589,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                                             <option value="lte" <?php selected($condition['operator'] ?? '', 'lte'); ?>><?php esc_html_e('<=', 'wp-aibot'); ?></option>
                                             <option value="empty" <?php selected($condition['operator'] ?? '', 'empty'); ?>><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
                                             <option value="not_empty" <?php selected($condition['operator'] ?? '', 'not_empty'); ?>><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
-                                            <option value="changed" <?php selected($condition['operator'] ?? '', 'changed'); ?>><?php esc_html_e('changed (value changed)', 'wp-aibot'); ?></option>
+                                            <option value="changed" <?php selected($condition['operator'] ?? '', 'changed'); ?>><?php esc_html_e('changed (changes to any specified value)', 'wp-aibot'); ?></option>
                                         </select>
                                     </div>
                                     <div class="js-notify-field-value">
@@ -650,7 +650,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                                 <option value="lte"><?php esc_html_e('<=', 'wp-aibot'); ?></option>
                                 <option value="empty"><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
                                 <option value="not_empty"><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
-                                <option value="changed"><?php esc_html_e('changed (value changed)', 'wp-aibot'); ?></option>
+                                <option value="changed"><?php esc_html_e('changed (changes to any specified value)', 'wp-aibot'); ?></option>
                             </select>
                         </div>
                         <div class="js-notify-field-value">
@@ -767,7 +767,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                                             <option value="lte" <?php selected($condition['operator'] ?? '', 'lte'); ?>><?php esc_html_e('<=', 'wp-aibot'); ?></option>
                                             <option value="empty" <?php selected($condition['operator'] ?? '', 'empty'); ?>><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
                                             <option value="not_empty" <?php selected($condition['operator'] ?? '', 'not_empty'); ?>><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
-                                            <option value="changed" <?php selected($condition['operator'] ?? '', 'changed'); ?>><?php esc_html_e('changed (value changed)', 'wp-aibot'); ?></option>
+                                            <option value="changed" <?php selected($condition['operator'] ?? '', 'changed'); ?>><?php esc_html_e('changed (changes to any specified value)', 'wp-aibot'); ?></option>
                                         </select>
                                     </div>
                                     <div class="js-notify-field-value">
@@ -828,7 +828,7 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
                                 <option value="lte"><?php esc_html_e('<=', 'wp-aibot'); ?></option>
                                 <option value="empty"><?php esc_html_e('is empty', 'wp-aibot'); ?></option>
                                 <option value="not_empty"><?php esc_html_e('is not empty', 'wp-aibot'); ?></option>
-                                <option value="changed"><?php esc_html_e('changed (value changed)', 'wp-aibot'); ?></option>
+                                <option value="changed"><?php esc_html_e('changed (changes to any specified value)', 'wp-aibot'); ?></option>
                             </select>
                         </div>
                         <div class="js-notify-field-value">
