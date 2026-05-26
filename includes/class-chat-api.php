@@ -99,8 +99,11 @@ class AI_Chatbot_Chat_API {
         // Load existing summary for AI context (preserves key info beyond max history limit)
         $existing_summary = get_post_meta($conversation_id, 'conversation_summary', true);
 
+        // Load current lead data so the AI knows what's already been collected
+        $existing_lead = get_post_meta($conversation_id, 'conversation_lead_data', true);
+
         // Build messages
-        $messages = self::build_messages($config, $knowledge_context, $history, $message, $existing_summary);
+        $messages = self::build_messages($config, $knowledge_context, $history, $message, $existing_summary, $existing_lead);
 
         // Log prompt diagnostics
         $system_prompt = $messages[0]['content'] ?? '';
@@ -339,7 +342,7 @@ class AI_Chatbot_Chat_API {
         return $current;
     }
 
-    private static function build_messages(array $config, string $knowledge_context, array $history, string $message, string $summary = ''): array {
+    private static function build_messages(array $config, string $knowledge_context, array $history, string $message, string $summary = '', $existing_lead = null): array {
         $system = $config['chatbot_system_prompt'] ?? '';
 
         // Inject AI behavior rules (security, prompt injection protection)
@@ -365,6 +368,19 @@ class AI_Chatbot_Chat_API {
         // Inject previous conversation summary (allows AI to recall key info beyond max history)
         if (!empty($summary)) {
             $system .= "\n\n---\n\nPrevious Conversation Summary:\n{$summary}";
+        }
+
+        // Inject current lead data so the AI can assess lead_score based on what's already collected
+        if (!empty($existing_lead) && is_array($existing_lead)) {
+            $lead_lines = [];
+            foreach ($existing_lead as $key => $val) {
+                if (!empty($val) && is_string($val)) {
+                    $lead_lines[] = "  {$key}: {$val}";
+                }
+            }
+            if (!empty($lead_lines)) {
+                $system .= "\n\n---\n\nCurrently Collected Lead Data:\n" . implode("\n", $lead_lines);
+            }
         }
 
         $messages = [['role' => 'system', 'content' => $system]];

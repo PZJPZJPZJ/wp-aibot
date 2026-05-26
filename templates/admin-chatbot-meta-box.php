@@ -707,12 +707,12 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             <label><?php esc_html_e('Notification Mode', 'wp-aibot'); ?></label>
             <div style="margin-top:6px;">
                 <label style="display:block;margin-bottom:6px;">
-                    <input type="radio" name="chatbot_notify_mode" value="once" <?php checked($meta['chatbot_notify_mode'], 'once'); ?> />
-                    <?php esc_html_e('Send once — notify only once per conversation', 'wp-aibot'); ?>
-                </label>
-                <label style="display:block;">
                     <input type="radio" name="chatbot_notify_mode" value="always" <?php checked($meta['chatbot_notify_mode'], 'always'); ?> />
                     <?php esc_html_e('Every match — send notification every time rules are met', 'wp-aibot'); ?>
+                </label>
+                <label style="display:block;">
+                    <input type="radio" name="chatbot_notify_mode" value="once" <?php checked($meta['chatbot_notify_mode'], 'once'); ?> />
+                    <?php esc_html_e('Send once — notify only once per conversation', 'wp-aibot'); ?>
                 </label>
             </div>
         </div>

@@ -261,7 +261,7 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_fab_ripple_radius'  => '2.5',
             'chatbot_fab_icon_shake'     => '0',
             'chatbot_fab_hint'           => '',
-            'chatbot_fab_hint_position'  => 'right',
+            'chatbot_fab_hint_position'  => 'left',
             'chatbot_fab_hint_bg'        => '#ffffff',
             'chatbot_fab_hint_text'      => '#333333',
             'chatbot_fab_hint_font_size' => '15',

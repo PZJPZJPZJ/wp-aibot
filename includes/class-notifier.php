@@ -23,11 +23,16 @@ class AI_Chatbot_Notifier {
             return; // disabled — no count written (0 = not sent)
         }
 
-        // Load previous lead data for 'changed' operator comparison
+        // Load previous lead data for 'changed' operator comparison.
+        // Note: conversation_lead_data stores the lead sub-array only (e.g. {lead_score, name, ...}),
+        // but rule field paths use "lead.xxx" prefix relative to the full parsed data.
+        // Wrap it so resolve_field('lead.lead_score') resolves correctly.
         $this->old_lead_data = null;
         if ($conversation_id > 0) {
             $old = get_post_meta($conversation_id, 'conversation_lead_data', true);
-            $this->old_lead_data = is_array($old) ? $old : null;
+            if (is_array($old)) {
+                $this->old_lead_data = ['lead' => $old];
+            }
         }
 
         // Deduplication: 'once' mode skips if already sent
