@@ -14,7 +14,7 @@
 
 defined('ABSPATH') || exit;
 
-define('AI_CHATBOT_VERSION', '1.0.0');
+define('AI_CHATBOT_VERSION', get_file_data(__FILE__, ['version' => 'Version'])['version']);
 define('AI_CHATBOT_FILE', __FILE__);
 define('AI_CHATBOT_PATH', plugin_dir_path(__FILE__));
 define('AI_CHATBOT_URL', plugin_dir_url(__FILE__));

@@ -87,7 +87,7 @@ class WP_Plugin_Github_Updater {
 
         $release = $this->fetch_release_data();
         if (!$release) {
-            return false;
+            return $update;
         }
 
         return array(
@@ -192,21 +192,32 @@ class WP_Plugin_Github_Updater {
     }
 
     /**
-     * 获取 GitHub Release 数据，带 Transient 缓存。
+     * 获取 GitHub Release 数据，带简单缓存。
      *
-     * 返回数组包含 version、download_url、url、changelog，失败返回 null。
+     * - 缓存 1 小时，期间直接返回缓存，不请求 GitHub API
+     * - API 失败时设 1 小时 backoff，期间返回旧缓存
+     * - 既无缓存又失败才返回 null
      */
     private function fetch_release_data(): ?array {
         if (empty($this->github_api_url)) {
             return null;
         }
 
-        $cache_key = 'wp_github_updater_' . md5($this->github_repo);
-        $cached    = get_transient($cache_key);
+        $hash        = md5($this->github_repo);
+        $cache_key   = 'wp_github_updater_' . $hash;
+        $backoff_key = $cache_key . '_backoff';
+        $cached      = get_transient($cache_key);
+        $backoff     = get_transient($backoff_key);
 
+        // 缓存命中 or backoff 期内 → 直接返回
         if (false !== $cached && is_array($cached)) {
             return $cached;
         }
+        if (false !== $backoff) {
+            return null;
+        }
+
+        // ── 缓存过期且没有 backoff → 请求 API ──
 
         $response = wp_remote_get($this->github_api_url, array(
             'timeout'    => 15,
@@ -214,21 +225,13 @@ class WP_Plugin_Github_Updater {
         ));
 
         if (is_wp_error($response)) {
-            error_log(sprintf(
-                'GitHub Updater [%s]: API request failed — %s',
-                $this->slug,
-                $response->get_error_message()
-            ));
+            set_transient($backoff_key, 1, HOUR_IN_SECONDS);
             return null;
         }
 
         $code = wp_remote_retrieve_response_code($response);
         if (200 !== $code) {
-            error_log(sprintf(
-                'GitHub Updater [%s]: API returned HTTP %d',
-                $this->slug,
-                $code
-            ));
+            set_transient($backoff_key, 1, HOUR_IN_SECONDS);
             return null;
         }
 
@@ -236,10 +239,7 @@ class WP_Plugin_Github_Updater {
         $data = json_decode($body, true);
 
         if (!is_array($data) || empty($data['tag_name'])) {
-            error_log(sprintf(
-                'GitHub Updater [%s]: invalid API response format',
-                $this->slug
-            ));
+            set_transient($backoff_key, 1, HOUR_IN_SECONDS);
             return null;
         }
 
@@ -252,9 +252,7 @@ class WP_Plugin_Github_Updater {
                 : 'No changelog provided.',
         );
 
-        // 缓存 6 小时
-        $cache_ttl = (int) apply_filters('wp_github_updater_cache_ttl', 6 * HOUR_IN_SECONDS);
-        set_transient($cache_key, $release, $cache_ttl);
+        set_transient($cache_key, $release, HOUR_IN_SECONDS);
 
         return $release;
     }
