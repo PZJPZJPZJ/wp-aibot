@@ -65,6 +65,7 @@ class AI_Chatbot_Plugin {
         add_action('wp_ajax_ai_chatbot_preview', ['AI_Chatbot_Admin_Ajax', 'preview']);
         add_action('wp_ajax_ai_chatbot_toggle_logging', [self::class, 'ajax_toggle_logging']);
         add_action('wp_ajax_ai_chatbot_clear_logs', [self::class, 'ajax_clear_logs']);
+        add_action('wp_ajax_ai_chatbot_trigger_notify', ['AI_Chatbot_Admin_Ajax', 'trigger_notify']);
     }
 
     /**

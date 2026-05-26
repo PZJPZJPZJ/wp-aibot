@@ -27,10 +27,6 @@ defined('ABSPATH') || exit;
             <tr><th><?php esc_html_e('Messages', 'wp-aibot'); ?></th><td><?php echo $msg_count; ?></td></tr>
             <tr><th><?php esc_html_e('Started', 'wp-aibot'); ?></th><td><?php echo esc_html($started_at); ?></td></tr>
             <?php
-            $notify_count = (int) get_post_meta($post->ID, 'conversation_notification_count', true);
-            if ($notify_count > 0):
-                echo '<tr><th>' . __('Notification Sent', 'wp-aibot') . '</th><td><span style="color:#46b450;">✓ ' . sprintf(__('%d time(s)', 'wp-aibot'), $notify_count) . '</span></td></tr>';
-            endif;
             $conv_summary = get_post_meta($post->ID, 'conversation_summary', true);
             if (!empty($conv_summary)):
             ?><tr><th><?php esc_html_e('Summary', 'wp-aibot'); ?></th><td><?php echo esc_html($conv_summary); ?></td></tr><?php
@@ -82,8 +78,64 @@ defined('ABSPATH') || exit;
     </div>
     <?php endif; ?>
 
+    <!-- Trigger Notification -->
+    <div class="ai-conv-section">
+        <h3><?php esc_html_e('Notification', 'wp-aibot'); ?></h3>
+        <?php
+        $notify_count = (int) get_post_meta($post->ID, 'conversation_notification_count', true);
+        if ($notify_count > 0):
+            echo '<p style="color:#46b450;margin:0 0 10px;">✓ ' . sprintf(__('Sent %d time(s)', 'wp-aibot'), $notify_count) . '</p>';
+        endif;
+        ?>
+        <button type="button" class="button button-primary" id="ai-trigger-notify" data-post-id="<?php echo (int) $post->ID; ?>">
+            <?php esc_html_e('Send Notification Now', 'wp-aibot'); ?>
+        </button>
+        <span id="ai-notify-result" style="margin-left:10px;"></span>
+    </div>
+
 </div>
 <script>
-var el = document.querySelector('.ai-conv-messages-scroll');
-if (el) el.scrollTop = el.scrollHeight;
+(function() {
+    var el = document.querySelector('.ai-conv-messages-scroll');
+    if (el) el.scrollTop = el.scrollHeight;
+
+    var btn = document.getElementById('ai-trigger-notify');
+    var result = document.getElementById('ai-notify-result');
+    if (btn) {
+        btn.addEventListener('click', function() {
+            if (btn.disabled) return;
+            btn.disabled = true;
+            btn.textContent = '<?php echo esc_js(__('Sending...', 'wp-aibot')); ?>';
+            result.textContent = '';
+            result.style.color = '';
+
+            var data = new FormData();
+            data.append('action', 'ai_chatbot_trigger_notify');
+            data.append('nonce', '<?php echo wp_create_nonce('ai_chatbot_trigger_notify'); ?>');
+            data.append('post_id', btn.getAttribute('data-post-id'));
+
+            fetch(ajaxurl, { method: 'POST', body: data })
+                .then(function(r) { return r.json(); })
+                .then(function(json) {
+                    if (json.success) {
+                        result.textContent = '<?php echo esc_js(__('✓ Sent', 'wp-aibot')); ?>';
+                        result.style.color = '#46b450';
+                    } else {
+                        result.textContent = json.data && json.data.message
+                            ? json.data.message
+                            : '<?php echo esc_js(__('Failed', 'wp-aibot')); ?>';
+                        result.style.color = '#dc3232';
+                    }
+                })
+                .catch(function() {
+                    result.textContent = '<?php echo esc_js(__('Request failed', 'wp-aibot')); ?>';
+                    result.style.color = '#dc3232';
+                })
+                .then(function() {
+                    btn.disabled = false;
+                    btn.textContent = '<?php echo esc_js(__('Send Notification Now', 'wp-aibot')); ?>';
+                });
+        });
+    }
+})();
 </script>
