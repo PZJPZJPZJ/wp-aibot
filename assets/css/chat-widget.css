@@ -427,3 +427,19 @@ div.ai-chatbot-container .ai-chat-contact-submit {
     background: #ccc;
     border-radius: 3px;
 }
+
+/* Markdown link styling */
+.ai-chatbot-bubble a {
+    color: #2196F3;
+    text-decoration: underline;
+    word-break: break-all;
+}
+
+.ai-chatbot-bubble a:hover {
+    opacity: 0.8;
+}
+
+.ai-chatbot-user .ai-chatbot-bubble a {
+    color: #fff;
+    text-decoration: underline;
+}

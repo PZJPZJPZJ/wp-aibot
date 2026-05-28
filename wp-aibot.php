@@ -2,7 +2,7 @@
 /**
  * Plugin Name: WP AIBot
  * Description: Smart AI chatbot for your website. Lead capture, knowledge base Q&A, multi-bot management — works with OpenAI, Anthropic, and any compatible API. Boost sales, not complexity.
- * Version: 2.7.0
+ * Version: 2.8.0
  * Requires at least: 6.7
  * Requires PHP: 8.0
  * Author: AzzDev

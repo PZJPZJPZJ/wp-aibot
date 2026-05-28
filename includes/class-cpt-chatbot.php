@@ -181,7 +181,7 @@ class AI_Chatbot_CPT_Chatbot {
                     $value = $clean;
                 } elseif (is_array($value)) {
                     $value = array_map('sanitize_text_field', $value);
-                } elseif (in_array($field, ['chatbot_system_prompt', 'chatbot_ai_rules'], true)) {
+                } elseif (in_array($field, ['chatbot_system_prompt', 'chatbot_ai_rules', 'chatbot_greeting', 'chatbot_offline_msg'], true)) {
                     $value = sanitize_textarea_field($value);
                 } else {
                     $value = sanitize_text_field($value);
@@ -245,8 +245,8 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_notify_on_scores' => ['A', 'B'],
             'chatbot_notify_rules'   => self::load_default_json('notify-rules.json', []),
             'chatbot_i18n'             => [
-                'title'             => 'AI Assistant',
-                'subtitle'          => 'Ask me anything',
+                'title'             => 'Contact Us For Any Support',
+                'subtitle'          => 'Share Your Needs and We Will Contact You Within 24 Hours.',
                 'input_placeholder' => 'Type your message...',
                 'thinking_text'     => 'Thinking...',
             ],
@@ -270,8 +270,8 @@ class AI_Chatbot_CPT_Chatbot {
             'chatbot_popup_transition_duration' => '100',
             'chatbot_open_cache_ttl'     => '1440',
             'chatbot_fab_position'       => 'bottom-right',
-            'chatbot_fab_distance_x'     => '24',
-            'chatbot_fab_distance_y'     => '24',
+            'chatbot_fab_distance_x'     => '25',
+            'chatbot_fab_distance_y'     => '25',
         ];
     }
 

@@ -152,8 +152,8 @@
                     </div>
                     <div class="ai-chatbot-popup">
                         <div class="ai-chatbot-header">
-                            <span class="ai-chatbot-title">${i18n.title || 'AI Assistant'}</span>
-                            <span class="ai-chatbot-subtitle">${i18n.subtitle || 'Ask me anything'}</span>
+                            <span class="ai-chatbot-title">${i18n.title || 'Contact Us For Any Support'}</span>
+                            <span class="ai-chatbot-subtitle">${i18n.subtitle || 'Share Your Needs and We Will Contact You Within 24 Hours.'}</span>
                             <button class="ai-chatbot-close">✕</button>
                         </div>
                         <div class="ai-chatbot-messages"></div>
@@ -167,8 +167,8 @@
                 html = `
                     <div class="ai-chatbot-inline">
                         <div class="ai-chatbot-header">
-                            <span class="ai-chatbot-title">${i18n.title || 'AI Assistant'}</span>
-                            <span class="ai-chatbot-subtitle">${i18n.subtitle || 'Ask me anything'}</span>
+                            <span class="ai-chatbot-title">${i18n.title || 'Contact Us For Any Support'}</span>
+                            <span class="ai-chatbot-subtitle">${i18n.subtitle || 'Share Your Needs and We Will Contact You Within 24 Hours.'}</span>
                         </div>
                         <div class="ai-chatbot-messages"></div>
                         <div class="ai-chatbot-input-area">

@@ -26,11 +26,13 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         <div class="ai-chatbot-field-row">
             <div class="ai-chatbot-field">
                 <label for="chatbot_greeting"><?php esc_html_e('Greeting Message', 'wp-aibot'); ?></label>
-                <input type="text" id="chatbot_greeting" name="chatbot_greeting" value="<?php echo esc_attr($meta['chatbot_greeting']); ?>" />
+                <textarea id="chatbot_greeting" name="chatbot_greeting" rows="3" style="max-width:500px;"><?php echo esc_textarea($meta['chatbot_greeting']); ?></textarea>
+                <p class="description"><?php esc_html_e('Supports Markdown: **bold**, *italic*, [link text](url)', 'wp-aibot'); ?></p>
             </div>
             <div class="ai-chatbot-field">
                 <label for="chatbot_offline_msg"><?php esc_html_e('Offline Message', 'wp-aibot'); ?></label>
-                <input type="text" id="chatbot_offline_msg" name="chatbot_offline_msg" value="<?php echo esc_attr($meta['chatbot_offline_msg']); ?>" />
+                <textarea id="chatbot_offline_msg" name="chatbot_offline_msg" rows="3" style="max-width:500px;"><?php echo esc_textarea($meta['chatbot_offline_msg']); ?></textarea>
+                <p class="description"><?php esc_html_e('Supports Markdown: **bold**, *italic*, [link text](url)', 'wp-aibot'); ?></p>
             </div>
         </div>
 
