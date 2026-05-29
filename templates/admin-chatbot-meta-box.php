@@ -265,15 +265,17 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
             </select>
             <div class="description"><?php esc_html_e('OpenAI-compatible and Anthropic-compatible APIs cover most providers (OpenRouter, DeepSeek, Azure, etc.). Select "OpenAI" for any API that uses the ChatGPT message format; set the API Base URL and Model below accordingly.', 'wp-aibot'); ?></div>
         </div>
-        <div class="ai-chatbot-field">
-            <label for="chatbot_api_base_url"><?php esc_html_e('API Base URL', 'wp-aibot'); ?></label>
-            <input type="url" id="chatbot_api_base_url" name="chatbot_api_base_url" value="<?php echo esc_attr($meta['chatbot_api_base_url']); ?>" />
-            <div class="description"><?php esc_html_e('e.g., https://api.openai.com/v1', 'wp-aibot'); ?></div>
-        </div>
-        <div class="ai-chatbot-field">
-            <label for="chatbot_api_key"><?php esc_html_e('API Key', 'wp-aibot'); ?></label>
-            <input type="text" id="chatbot_api_key" name="chatbot_api_key" value="" placeholder="<?php esc_attr_e('Leave blank to keep current key', 'wp-aibot'); ?>" />
-            <div class="description"><?php esc_html_e('Leave blank to keep current key. New value will be encrypted.', 'wp-aibot'); ?></div>
+        <div class="ai-chatbot-field-row">
+            <div class="ai-chatbot-field">
+                <label for="chatbot_api_base_url"><?php esc_html_e('API Base URL', 'wp-aibot'); ?></label>
+                <input type="url" id="chatbot_api_base_url" name="chatbot_api_base_url" value="<?php echo esc_attr($meta['chatbot_api_base_url']); ?>" />
+                <div class="description"><?php esc_html_e('e.g., https://api.openai.com/v1', 'wp-aibot'); ?></div>
+            </div>
+            <div class="ai-chatbot-field">
+                <label for="chatbot_api_key"><?php esc_html_e('API Key', 'wp-aibot'); ?></label>
+                <input type="text" id="chatbot_api_key" name="chatbot_api_key" value="" placeholder="<?php esc_attr_e('Leave blank to keep current key', 'wp-aibot'); ?>" />
+                <div class="description"><?php esc_html_e('Leave blank to keep current key. New value will be encrypted.', 'wp-aibot'); ?></div>
+            </div>
         </div>
         <div class="ai-chatbot-field-row">
             <div class="ai-chatbot-field">

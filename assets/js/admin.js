@@ -265,6 +265,7 @@
                 });
                 if (val && models.indexOf(val) !== -1) {
                     $sel.val(val);
+                    showCustomInput($sel);
                 } else if (val && models.indexOf(val) === -1) {
                     $sel.val('__custom__');
                     showCustomInput($sel);
@@ -310,14 +311,17 @@
             $hidden.val($input.val());
         }
 
-        // Restore saved custom values on page load
-        if ($modelHidden.val() && !$modelSelect.find('option[value="' + $modelHidden.val().replace(/"/g, '&quot;') + '"]').length) {
-            $modelSelect.val('__custom__');
-            showCustomInput($modelSelect);
-        }
-        if ($fallbackHidden.val() && !$fallbackSelect.find('option[value="' + $fallbackHidden.val().replace(/"/g, '&quot;') + '"]').length) {
-            $fallbackSelect.val('__custom__');
-            showCustomInput($fallbackSelect);
+        // Restore saved custom values after select options are settled
+        function restoreCustomIfNeeded() {
+            [$modelSelect, $fallbackSelect].forEach(function($sel) {
+                var isModel = $sel.is($modelSelect);
+                var $hidden = isModel ? $modelHidden : $fallbackHidden;
+                var val = $hidden.val();
+                if (val && $sel.val() !== val && $sel.find('option[value="' + val.replace(/"/g, '&quot;') + '"]').length === 0) {
+                    $sel.val('__custom__');
+                    showCustomInput($sel);
+                }
+            });
         }
 
         // Select change → sync hidden, show/hide custom
@@ -331,8 +335,14 @@
         // Auto-fetch models on page load for saved chatbots
         function fetchModels() {
             var chatbotId = $('#post_ID').val();
-            if (!chatbotId || chatbotId <= 0) return;
-            if ($platformSelect.val() === 'anthropic') return;
+            if (!chatbotId || chatbotId <= 0) {
+                restoreCustomIfNeeded();
+                return;
+            }
+            if ($platformSelect.val() === 'anthropic') {
+                restoreCustomIfNeeded();
+                return;
+            }
 
             $.post(ajaxurl, {
                 action: 'ai_chatbot_fetch_models',
@@ -345,15 +355,15 @@
                 if (response.success && response.data.models) {
                     populateModelSelects(response.data.models);
                 }
+            }).always(function() {
+                restoreCustomIfNeeded();
             });
         }
         fetchModels();
 
-        // Re-fetch when platform changes (for OpenAI)
+        // Re-fetch when platform changes
         $platformSelect.on('change', function() {
-            if ($(this).val() !== 'anthropic') {
-                fetchModels();
-            }
+            fetchModels();
         });
     });
 })(jQuery);
