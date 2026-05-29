@@ -11,15 +11,42 @@ class AI_Chatbot_AI_Client {
 
     /**
      * Send a chat completion request to the configured platform.
+     * On failure, retries with fallback model if configured.
      */
     public function chat(array $messages): ?array {
         $platform = $this->config['chatbot_platform'] ?? 'openai';
 
-        if ($platform === 'anthropic') {
-            return $this->chat_anthropic($messages);
+        // Primary attempt
+        $result = $platform === 'anthropic'
+            ? $this->chat_anthropic($messages)
+            : $this->chat_openai($messages);
+
+        // Fallback retry if primary failed and fallback is configured
+        if ($result === null) {
+            $fallback_model = trim($this->config['chatbot_fallback_model'] ?? '');
+
+            if ($fallback_model !== ''
+                && $fallback_model !== $this->config['chatbot_model']
+            ) {
+                $original_model = $this->config['chatbot_model'];
+                $this->config['chatbot_model'] = $fallback_model;
+
+                $result = $platform === 'anthropic'
+                    ? $this->chat_anthropic($messages)
+                    : $this->chat_openai($messages);
+
+                if ($result !== null) {
+                    AI_Chatbot_Logger::info('Chat completed with fallback model', [
+                        'original_model' => $original_model,
+                        'fallback_model' => $fallback_model,
+                    ]);
+                }
+
+                $this->config['chatbot_model'] = $original_model;
+            }
         }
 
-        return $this->chat_openai($messages);
+        return $result;
     }
 
     /**
@@ -166,9 +193,36 @@ class AI_Chatbot_AI_Client {
     }
 
     /**
-     * [Reserved] List available models.
+     * List available models from the API.
+     * For Anthropic: returns empty (manual entry only).
+     * For OpenAI-compatible: calls GET {base_url}/models.
      */
     public function list_models(): array {
-        return [];
+        $platform = $this->config['chatbot_platform'] ?? 'openai';
+
+        if ($platform === 'anthropic') {
+            return [];
+        }
+
+        $api_url = rtrim($this->config['chatbot_api_base_url'] ?? 'https://api.openai.com/v1', '/');
+        $api_key = $this->config['chatbot_api_key'] ?? '';
+
+        $response = wp_remote_get($api_url . '/models', [
+            'headers' => [
+                'Authorization' => 'Bearer ' . $api_key,
+            ],
+            'timeout' => 15,
+        ]);
+
+        if (is_wp_error($response)) {
+            return [];
+        }
+
+        $body = json_decode(wp_remote_retrieve_body($response), true);
+        $models = $body['data'] ?? [];
+
+        return array_values(array_map(function ($m) {
+            return $m['id'] ?? '';
+        }, array_filter($models, fn($m) => !empty($m['id']))));
     }
 }

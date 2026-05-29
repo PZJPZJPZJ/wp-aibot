@@ -66,6 +66,7 @@ class AI_Chatbot_Plugin {
         add_action('wp_ajax_ai_chatbot_toggle_logging', [self::class, 'ajax_toggle_logging']);
         add_action('wp_ajax_ai_chatbot_clear_logs', [self::class, 'ajax_clear_logs']);
         add_action('wp_ajax_ai_chatbot_trigger_notify', ['AI_Chatbot_Admin_Ajax', 'trigger_notify']);
+        add_action('wp_ajax_ai_chatbot_fetch_models', ['AI_Chatbot_Admin_Ajax', 'fetch_models']);
     }
 
     /**
@@ -302,9 +303,15 @@ class AI_Chatbot_Plugin {
 
             wp_localize_script('ai-chatbot-admin', 'aiChatbotAdmin', [
                 'preview_nonce' => wp_create_nonce('ai_chatbot_preview'),
+                'fetchModelsNonce' => wp_create_nonce('ai_chatbot_fetch_models'),
+                'modelList'        => get_post_meta(get_the_ID(), 'chatbot_model_list', true) ?: [],
                 'i18n' => [
                     'hideGuide' => __('收起指南', 'wp-aibot'),
                     'showGuide' => __('如何获取 Webhook？', 'wp-aibot'),
+                    'anthropicManual' => __('Anthropic only supports manual entry.', 'wp-aibot'),
+                    'fetchModels' => __('Fetch Models', 'wp-aibot'),
+                    'fetching' => __('Fetching...', 'wp-aibot'),
+                    'modelsFound' => __('Found %d models', 'wp-aibot'),
                 ],
             ]);
         }

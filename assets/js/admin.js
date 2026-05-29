@@ -239,5 +239,121 @@
                 guideToggle.textContent = isHidden ? config.i18n.hideGuide : config.i18n.showGuide;
             });
         }
+
+        // ===== Model Selects: Fetch, Populate, Custom Toggle =====
+        var $modelSelect = $('#chatbot_model');
+        var $modelHidden = $('#chatbot_model_hidden');
+        var $modelCustom = $('#chatbot_model_custom');
+        var $modelCustomWrap = $('#chatbot-model-custom-wrap');
+        var $fallbackSelect = $('#chatbot_fallback_model');
+        var $fallbackHidden = $('#chatbot_fallback_model_hidden');
+        var $fallbackCustom = $('#chatbot_fallback_model_custom');
+        var $fallbackCustomWrap = $('#chatbot-fallback-model-custom-wrap');
+        var $platformSelect = $('#chatbot_platform');
+
+        function populateModelSelects(models) {
+            var currentModel = $modelHidden.val();
+            var currentFallback = $fallbackHidden.val();
+
+            [$modelSelect, $fallbackSelect].forEach(function($sel) {
+                var val = $sel.is($modelSelect) ? currentModel : currentFallback;
+                $sel.find('option:not([value=""]):not([value="__custom__"])').remove();
+                $.each(models, function(i, m) {
+                    if ($sel.find('option[value="' + m.replace(/"/g, '&quot;') + '"]').length === 0) {
+                        $sel.append($('<option>').val(m).text(m));
+                    }
+                });
+                if (val && models.indexOf(val) !== -1) {
+                    $sel.val(val);
+                } else if (val && models.indexOf(val) === -1) {
+                    $sel.val('__custom__');
+                    showCustomInput($sel);
+                } else {
+                    $sel.val('');
+                }
+            });
+        }
+
+        function showCustomInput($sel) {
+            var isModel = $sel.is($modelSelect);
+            var $wrap = isModel ? $modelCustomWrap : $fallbackCustomWrap;
+            var $input = isModel ? $modelCustom : $fallbackCustom;
+            var $hidden = isModel ? $modelHidden : $fallbackHidden;
+            var val = $hidden.val();
+            if ($sel.val() === '__custom__') {
+                $wrap.show();
+                $input.val(val);
+            } else {
+                $wrap.hide();
+            }
+        }
+
+        function syncHiddenFromSelect($sel) {
+            var isModel = $sel.is($modelSelect);
+            var $hidden = isModel ? $modelHidden : $fallbackHidden;
+            var $input = isModel ? $modelCustom : $fallbackCustom;
+            var $wrap = isModel ? $modelCustomWrap : $fallbackCustomWrap;
+
+            if ($sel.val() === '__custom__') {
+                $wrap.show();
+                $input.val('').focus();
+                $hidden.val('');
+            } else {
+                $wrap.hide();
+                $hidden.val($sel.val());
+            }
+        }
+
+        function syncHiddenFromCustom($input) {
+            var isModel = $input.is($modelCustom);
+            var $hidden = isModel ? $modelHidden : $fallbackHidden;
+            $hidden.val($input.val());
+        }
+
+        // Restore saved custom values on page load
+        if ($modelHidden.val() && !$modelSelect.find('option[value="' + $modelHidden.val().replace(/"/g, '&quot;') + '"]').length) {
+            $modelSelect.val('__custom__');
+            showCustomInput($modelSelect);
+        }
+        if ($fallbackHidden.val() && !$fallbackSelect.find('option[value="' + $fallbackHidden.val().replace(/"/g, '&quot;') + '"]').length) {
+            $fallbackSelect.val('__custom__');
+            showCustomInput($fallbackSelect);
+        }
+
+        // Select change → sync hidden, show/hide custom
+        $modelSelect.on('change', function() { syncHiddenFromSelect($(this)); });
+        $fallbackSelect.on('change', function() { syncHiddenFromSelect($(this)); });
+
+        // Custom input change → sync to hidden
+        $modelCustom.on('input', function() { syncHiddenFromCustom($(this)); });
+        $fallbackCustom.on('input', function() { syncHiddenFromCustom($(this)); });
+
+        // Auto-fetch models on page load for saved chatbots
+        function fetchModels() {
+            var chatbotId = $('#post_ID').val();
+            if (!chatbotId || chatbotId <= 0) return;
+            if ($platformSelect.val() === 'anthropic') return;
+
+            $.post(ajaxurl, {
+                action: 'ai_chatbot_fetch_models',
+                chatbot_id: chatbotId,
+                platform: $platformSelect.val(),
+                api_base_url: $('#chatbot_api_base_url').val(),
+                api_key: $('#chatbot_api_key').val(),
+                _ajax_nonce: config.fetchModelsNonce
+            }, function(response) {
+                if (response.success && response.data.models) {
+                    populateModelSelects(response.data.models);
+                }
+            });
+        }
+        fetchModels();
+
+        // Re-fetch when platform changes (for OpenAI)
+        $platformSelect.on('change', function() {
+            if ($(this).val() !== 'anthropic') {
+                fetchModels();
+            }
+        });
     });
 })(jQuery);

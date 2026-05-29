@@ -278,12 +278,36 @@ $i18n = !empty($meta['chatbot_i18n']) ? $meta['chatbot_i18n'] : $defaults['chatb
         <div class="ai-chatbot-field-row">
             <div class="ai-chatbot-field">
                 <label for="chatbot_model"><?php esc_html_e('Model', 'wp-aibot'); ?></label>
-                <input type="text" id="chatbot_model" name="chatbot_model" value="<?php echo esc_attr($meta['chatbot_model']); ?>" />
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                    <select id="chatbot_model" style="flex:1;min-width:120px;">
+                        <option value=""><?php esc_html_e('— Select model —', 'wp-aibot'); ?></option>
+                        <option value="__custom__"><?php esc_html_e('Custom...', 'wp-aibot'); ?></option>
+                    </select>
+                </div>
+                <input type="hidden" id="chatbot_model_hidden" name="chatbot_model" value="<?php echo esc_attr($meta['chatbot_model']); ?>" />
+                <div id="chatbot-model-custom-wrap" style="margin-top:6px;display:none;">
+                    <input type="text" id="chatbot_model_custom" value="" placeholder="<?php esc_attr_e('Enter custom model name...', 'wp-aibot'); ?>" style="width:100%;" />
+                </div>
+                <div class="description"><?php esc_html_e('Available models are fetched automatically from the API. If fetching fails, use Custom... to enter the model name manually.', 'wp-aibot'); ?></div>
             </div>
             <div class="ai-chatbot-field">
-                <label for="chatbot_max_tokens"><?php esc_html_e('Max Tokens', 'wp-aibot'); ?></label>
+                <label for="chatbot_fallback_model"><?php esc_html_e('Fallback Model', 'wp-aibot'); ?></label>
+                <select id="chatbot_fallback_model" style="width:100%;">
+                    <option value=""><?php esc_html_e('— None (disabled) —', 'wp-aibot'); ?></option>
+                    <option value="__custom__"><?php esc_html_e('Custom...', 'wp-aibot'); ?></option>
+                </select>
+                <input type="hidden" id="chatbot_fallback_model_hidden" name="chatbot_fallback_model" value="<?php echo esc_attr($meta['chatbot_fallback_model']); ?>" />
+                <div id="chatbot-fallback-model-custom-wrap" style="margin-top:6px;display:none;">
+                    <input type="text" id="chatbot_fallback_model_custom" value="" placeholder="<?php esc_attr_e('Enter custom model name...', 'wp-aibot'); ?>" style="width:100%;" />
+                </div>
+                <div class="description"><?php esc_html_e('Leave empty to disable fallback. When the primary model fails, the fallback is tried automatically.', 'wp-aibot'); ?></div>
+            </div>
+        </div>
+        <div class="ai-chatbot-field-row" style="margin-top:12px;">
+            <div class="ai-chatbot-field">
+                <label for="chatbot_max_tokens"><?php esc_html_e('Max Output Tokens', 'wp-aibot'); ?></label>
                 <input type="number" id="chatbot_max_tokens" name="chatbot_max_tokens" value="<?php echo esc_attr($meta['chatbot_max_tokens']); ?>" min="1" max="32000" />
-                <div class="description"><?php esc_html_e('Maximum response length. 1 token ≈ 0.75 words.', 'wp-aibot'); ?></div>
+                <div class="description"><?php esc_html_e('Maximum output tokens for the response. 1 token ≈ 0.75 words.', 'wp-aibot'); ?></div>
             </div>
             <div class="ai-chatbot-field">
                 <label for="chatbot_temperature"><?php esc_html_e('Temperature', 'wp-aibot'); ?></label>

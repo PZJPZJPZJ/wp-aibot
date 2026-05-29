@@ -46,6 +46,53 @@ class AI_Chatbot_Admin_Ajax {
     }
 
     /**
+     * AJAX handler for fetching available models from the API.
+     */
+    public static function fetch_models(): void {
+        if (!current_user_can('manage_options')) {
+            wp_die(-1);
+        }
+
+        if (!check_ajax_referer('ai_chatbot_fetch_models', 'nonce', false)) {
+            wp_send_json_error(['message' => 'Security check failed.']);
+        }
+
+        $chatbot_id = (int) ($_POST['chatbot_id'] ?? 0);
+        $platform = sanitize_text_field($_POST['platform'] ?? 'openai');
+        $base_url = sanitize_text_field($_POST['api_base_url'] ?? '');
+        $api_key = sanitize_text_field($_POST['api_key'] ?? '');
+
+        // Load stored config if chatbot_id provided (decrypts key server-side)
+        if ($chatbot_id && get_post_type($chatbot_id) === 'ai_chatbot') {
+            $config = AI_Chatbot_CPT_Chatbot::get_meta($chatbot_id);
+            $platform = $config['chatbot_platform'] ?? $platform;
+            $base_url = $config['chatbot_api_base_url'] ?? $base_url;
+            $api_key = $config['chatbot_api_key'] ?? $api_key;
+        }
+
+        if (empty($base_url) || empty($api_key)) {
+            wp_send_json_error(['message' => 'API Base URL and API Key are required.']);
+        }
+
+        $client = new AI_Chatbot_AI_Client([
+            'chatbot_platform'     => $platform,
+            'chatbot_api_base_url' => $base_url,
+            'chatbot_api_key'      => $api_key,
+        ]);
+
+        $models = $client->list_models();
+
+        if (!empty($models)) {
+            if ($chatbot_id) {
+                update_post_meta($chatbot_id, 'chatbot_model_list', $models);
+            }
+            wp_send_json_success(['models' => $models]);
+        } else {
+            wp_send_json_error(['message' => 'No models found or API unreachable.']);
+        }
+    }
+
+    /**
      * AJAX handler for manually triggering notification on a conversation.
      */
     public static function trigger_notify(): void {
